@@ -5,18 +5,32 @@ var Scope = util.defClass({
 	},
 	
 	$watch: function(watchFn, listenFn) {
-		var $watchobj = {
+		var watchobj = {
 			watchFn: watchFn,
 			listenFn: listenFn
 		};
 
-		this.$$watchCollection.push($watchobj);
+		this.$$watchCollection.push(watchobj);
 	},
 	
 	$digest: function() {
-		this.$$watchCollection.forEach(function($watch) {
-			$watch.listenFn();
-		});
+		var newVal;
+		var oldVal;
+		
+		var invoke = function (watcher) {
+
+			newVal = watcher.watchFn(this);
+			oldVal = watcher.last;
+			
+			if(newVal !== oldVal){
+				watcher.last = newVal;
+				watcher.listenFn(newVal, oldVal, this);
+			}
+			
+		};
+		
+		_.each(this.$$watchCollection, invoke, this);
+		
 	}
 
 });
@@ -24,14 +38,14 @@ var Scope = util.defClass({
 
 
 var scope = new Scope();
+scope.title = "angular"
 
-watchFn = function() {
-	console.log("watch");
+watchFn = function(scope) {
+	return scope.title;
 };
-listenFn = function() {
-	console.log("listen");
+listenFn = function(newVal, oldVal, scope) {
+	console.log(newVal, oldVal, scope);
 };
 
 scope.$watch(watchFn, listenFn);
 scope.$digest();
-console.log(scope);
