@@ -10,6 +10,7 @@ var Scope = util.defClass({
 		var watchobj = {
 			watchFn: watchFn,
 			listenFn: listenFn || function() {},
+
 			last: Math.random()
 		};
 
@@ -58,6 +59,10 @@ var Scope = util.defClass({
 
 		_.each(this.$$watchCollection, invoke, this);
 		return dirty;
+	},
+
+	$eval: function(exp, locals){
+		return exp(this, locals);
 	}
 
 });
@@ -65,8 +70,8 @@ var Scope = util.defClass({
 
 
 var scope = new Scope();
-scope.counter1 = 0;
-scope.counter2 = 0;
+scope.counter1 = [];
+scope.counter2 = 1;
 
 
 var watchFn = function(scope) {
@@ -90,5 +95,10 @@ scope.$watch(watchFn2, listenFn2);
 
 scope.$digest();
 
-scope.counter1 = 1;
+scope.counter1.push(1);
 scope.$digest();
+
+scope.$eval(function(scope, arg){
+	console.log(scope);
+	console.log(arg)
+},2);
