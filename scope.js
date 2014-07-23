@@ -15,11 +15,21 @@ var Scope = util.defClass({
 		this.$$watchCollection.push(watchobj);
 	},
 
+
+
 	$digest: function() {
-		var dirty = this.$$digestonce();
-		if (dirty) {
-			this.$digest();
-		}
+		var ttl = 10;
+		var dirty;
+
+		do {
+			dirty = this.$$digestonce();
+			if (dirty && !(--ttl)) {
+				throw ("can not digest more or will explode");
+			}
+			
+		} while (dirty);
+
+
 	},
 
 	$$digestonce: function() {
@@ -49,16 +59,26 @@ var Scope = util.defClass({
 
 
 var scope = new Scope();
-scope.title = "angular";
+scope.counter1 = 0;
+scope.counter2 = 0;
 
 
 var watchFn = function(scope) {
-	return scope.title;
+	return scope.counter1;
+};
+
+var watchFn2 = function(scope) {
+	return scope.counter2;
 };
 
 var listenFn = function(newVal, oldVal, scope) {
-	scope.title = "react";
+	scope.counter2++;
+};
+
+var listenFn2 = function(newVal, oldVal, scope) {
+	scope.counter1++;
 };
 
 scope.$watch(watchFn, listenFn);
+scope.$watch(watchFn2, listenFn2);
 scope.$digest();
