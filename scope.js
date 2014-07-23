@@ -62,7 +62,17 @@ var Scope = util.defClass({
 	},
 
 	$eval: function(exp, locals){
+		
 		return exp(this, locals);
+	},
+
+	$apply: function(exp){
+
+		try{
+			return this.$eval(exp);
+		} finally {
+			this.$digest();
+		}
 	}
 
 });
@@ -75,10 +85,12 @@ scope.counter2 = 1;
 
 
 var watchFn = function(scope) {
+	console.log("watcher1");
 	return scope.counter1;
 };
 
 var watchFn2 = function(scope) {
+	console.log("watcher2");
 	return scope.counter2;
 };
 
@@ -92,13 +104,13 @@ var listenFn2 = function(newVal, oldVal, scope) {
 
 scope.$watch(watchFn, listenFn);
 scope.$watch(watchFn2, listenFn2);
-
-scope.$digest();
-
-scope.counter1.push(1);
 scope.$digest();
 
 scope.$eval(function(scope, arg){
 	console.log(scope);
 	console.log(arg)
 },2);
+
+scope.$apply(function(scope){
+	scope.counter1 = 2;
+});
