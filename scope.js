@@ -16,11 +16,16 @@ var Scope = util.defClass({
 			last: Math.random()
 		};
 
-		this.$$watchCollection.push(watchobj);
+		this.$$watchCollection.unshift(watchobj);
+		
+		return _.bind(function(){
+			var index = this.$$watchCollection.indexOf(watchobj);	
+			if(index >= 0){
+				this.$$watchCollection.splice(index, 1);
+			}
+		}, this);
 
 	},
-
-
 
 	$digest: function() {
 		var ttl = 10;
@@ -56,6 +61,7 @@ var Scope = util.defClass({
 		var oldVal;
 		var dirty;
 		var invoke = function(watcher) {
+		
 			try {
 				newVal = watcher.watchFn(this);
 				oldVal = watcher.last;
@@ -71,7 +77,7 @@ var Scope = util.defClass({
 			}
 		};
 
-		_.each(this.$$watchCollection, invoke, this);
+		_.forEachRight(this.$$watchCollection, invoke, this);
 		return dirty;
 	},
 
@@ -115,45 +121,3 @@ var Scope = util.defClass({
 });
 
 
-
-var scope = new Scope();
-scope.counter1 = [];
-scope.counter2 = 1;
-
-scope.$$postDigest(function() {
-	console.log("done");
-})
-
-var watchFn = function(scope) {
-	console.log("watcher1");
-	return sscope.counter1;
-};
-
-var watchFn2 = function(scope) {
-	console.log("watcher2");
-	return scope.counter2;
-};
-
-var listenFn = function(newVal, oldVal, scope) {
-	scope.$evalAsync(function(scope) {
-		console.log("asyncEval");
-	});
-
-};
-
-var listenFn2 = function(newVal, oldVal, scope) {
-	console.log("listener 2");
-};
-
-scope.$watch(watchFn, listenFn);
-scope.$watch(watchFn2, listenFn2);
-scope.$digest();
-
-scope.$eval(function(scope, arg) {
-	// console.log(scope);
-	// console.log(arg)
-}, 2);
-
-scope.$apply(function(scope) {
-	scope.counter1 = 2;
-});
