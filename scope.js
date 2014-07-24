@@ -3,8 +3,9 @@ var Scope = util.defClass({
 	constructor: function() {
 		this.$$watchCollection = [];
 		this.$$lastDirtyWatch = null;
-		this.$$asyncQueue= [];
+		this.$$asyncQueue = [];
 		this.$$phase = null;
+		this.$$postDigestQueue = [];
 	},
 
 	$watch: function(watchFn, listenFn) {
@@ -28,21 +29,25 @@ var Scope = util.defClass({
 		this.$beginePhase("$digest");
 		do {
 
-			while(this.$$asyncQueue.length){
+			while (this.$$asyncQueue.length) {
 				var asyncTask = this.$$asyncQueue.shift();
 				asyncTask.scope.$eval(asyncTask.expression);
 			}
 
 			dirty = this.$$digestonce();
-			
+
 			if ((dirty || this.$$asyncQueue.length) && !(--ttl)) {
 				this.$clearPhase();
 				throw ("can not digest more or will explode");
 			}
 
 		} while (dirty || this.$$asyncQueue.length);
-		
+
 		this.$clearPhase();
+
+		while (this.$$postDigestQueue.length) {
+			this.$$postDigestQueue.shift()();
+		}
 
 	},
 
@@ -51,17 +56,19 @@ var Scope = util.defClass({
 		var oldVal;
 		var dirty;
 		var invoke = function(watcher) {
+			try {
+				newVal = watcher.watchFn(this);
+				oldVal = watcher.last;
 
-			newVal = watcher.watchFn(this);
-			oldVal = watcher.last;
+				if (newVal !== oldVal) {
+					watcher.last = newVal;
+					watcher.listenFn(newVal, oldVal, this);
+					dirty = true;
 
-			if (newVal !== oldVal) {
-				watcher.last = newVal;
-				watcher.listenFn(newVal, oldVal, this);
-				dirty = true;
-
+				}
+			} catch(e){
+				console.error(e.message);
 			}
-
 		};
 
 		_.each(this.$$watchCollection, invoke, this);
@@ -83,22 +90,26 @@ var Scope = util.defClass({
 		}
 	},
 
-	$evalAsync : function(exp){
+	$evalAsync: function(exp) {
 		this.$$asyncQueue.push({
 			scope: this,
 			expression: exp
 		});
 	},
 
-	$beginePhase: function(phase){
-		if(this.$$phase){
+	$beginePhase: function(phase) {
+		if (this.$$phase) {
 			throw this.$$phase + "already in progress";
 		}
 		this.$$phase = phase;
 	},
 
-	$clearPhase: function(){
+	$clearPhase: function() {
 		this.$$phase = null;
+	},
+
+	$$postDigest: function(fn) {
+		this.$$postDigestQueue.push(fn);
 	}
 
 });
@@ -109,10 +120,13 @@ var scope = new Scope();
 scope.counter1 = [];
 scope.counter2 = 1;
 
+scope.$$postDigest(function() {
+	console.log("done");
+})
 
 var watchFn = function(scope) {
 	console.log("watcher1");
-	return scope.counter1;
+	return sscope.counter1;
 };
 
 var watchFn2 = function(scope) {
@@ -121,10 +135,10 @@ var watchFn2 = function(scope) {
 };
 
 var listenFn = function(newVal, oldVal, scope) {
-	scope.$evalAsync(function(scope){
+	scope.$evalAsync(function(scope) {
 		console.log("asyncEval");
 	});
-	
+
 };
 
 var listenFn2 = function(newVal, oldVal, scope) {
