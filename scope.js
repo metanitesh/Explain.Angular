@@ -3,6 +3,7 @@ var Scope = util.defClass({
 	constructor: function() {
 		this.$$watchCollection = [];
 		this.$$lastDirtyWatch = null;
+		this.$$asyncQueue= [];
 	},
 
 	$watch: function(watchFn, listenFn) {
@@ -10,12 +11,11 @@ var Scope = util.defClass({
 		var watchobj = {
 			watchFn: watchFn,
 			listenFn: listenFn || function() {},
-
 			last: Math.random()
 		};
 
 		this.$$watchCollection.push(watchobj);
-		this.$$lastDirtyWatch = null;
+
 	},
 
 
@@ -23,15 +23,22 @@ var Scope = util.defClass({
 	$digest: function() {
 		var ttl = 10;
 		var dirty;
-		this.$$lastDirtyWatch = null;
+
 
 		do {
+
+			while(this.$$asyncQueue.length){
+				var asyncTask = this.$$asyncQueue.shift();
+				asyncTask.scope.$eval(asyncTask.expression);
+			}
+
 			dirty = this.$$digestonce();
-			if (dirty && !(--ttl)) {
+			
+			if ((dirty || this.$$asyncQueue.length) && !(--ttl)) {
 				throw ("can not digest more or will explode");
 			}
-			
-		} while (dirty);
+
+		} while (dirty || this.$$asyncQueue.length);
 
 
 	},
@@ -46,13 +53,10 @@ var Scope = util.defClass({
 			oldVal = watcher.last;
 
 			if (newVal !== oldVal) {
-				this.$$lastDirtyWatch = watcher;
 				watcher.last = newVal;
 				watcher.listenFn(newVal, oldVal, this);
 				dirty = true;
 
-			} else if(this.$$lastDirtyWatch === watcher){
-				return false;
 			}
 
 		};
@@ -61,18 +65,25 @@ var Scope = util.defClass({
 		return dirty;
 	},
 
-	$eval: function(exp, locals){
-		
+	$eval: function(exp, locals) {
+
 		return exp(this, locals);
 	},
 
-	$apply: function(exp){
+	$apply: function(exp) {
 
-		try{
+		try {
 			return this.$eval(exp);
 		} finally {
 			this.$digest();
 		}
+	},
+
+	$evalAsync : function(exp){
+		this.$$asyncQueue.push({
+			scope: this,
+			expression: exp
+		});
 	}
 
 });
@@ -95,7 +106,10 @@ var watchFn2 = function(scope) {
 };
 
 var listenFn = function(newVal, oldVal, scope) {
-	console.log("listener 1");
+	scope.$evalAsync(function(scope){
+		console.log("asyncEval");
+	});
+	
 };
 
 var listenFn2 = function(newVal, oldVal, scope) {
@@ -106,11 +120,11 @@ scope.$watch(watchFn, listenFn);
 scope.$watch(watchFn2, listenFn2);
 scope.$digest();
 
-scope.$eval(function(scope, arg){
-	console.log(scope);
-	console.log(arg)
-},2);
+scope.$eval(function(scope, arg) {
+	// console.log(scope);
+	// console.log(arg)
+}, 2);
 
-scope.$apply(function(scope){
+scope.$apply(function(scope) {
 	scope.counter1 = 2;
 });
