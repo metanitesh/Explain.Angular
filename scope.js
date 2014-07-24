@@ -4,6 +4,7 @@ var Scope = util.defClass({
 		this.$$watchCollection = [];
 		this.$$lastDirtyWatch = null;
 		this.$$asyncQueue= [];
+		this.$$phase = null;
 	},
 
 	$watch: function(watchFn, listenFn) {
@@ -24,7 +25,7 @@ var Scope = util.defClass({
 		var ttl = 10;
 		var dirty;
 
-
+		this.$beginePhase("$digest");
 		do {
 
 			while(this.$$asyncQueue.length){
@@ -35,11 +36,13 @@ var Scope = util.defClass({
 			dirty = this.$$digestonce();
 			
 			if ((dirty || this.$$asyncQueue.length) && !(--ttl)) {
+				this.$clearPhase();
 				throw ("can not digest more or will explode");
 			}
 
 		} while (dirty || this.$$asyncQueue.length);
-
+		
+		this.$clearPhase();
 
 	},
 
@@ -71,10 +74,11 @@ var Scope = util.defClass({
 	},
 
 	$apply: function(exp) {
-
+		this.$beginePhase("$apply");
 		try {
 			return this.$eval(exp);
 		} finally {
+			this.$clearPhase();
 			this.$digest();
 		}
 	},
@@ -84,6 +88,17 @@ var Scope = util.defClass({
 			scope: this,
 			expression: exp
 		});
+	},
+
+	$beginePhase: function(phase){
+		if(this.$$phase){
+			throw this.$$phase + "already in progress";
+		}
+		this.$$phase = phase;
+	},
+
+	$clearPhase: function(){
+		this.$$phase = null;
 	}
 
 });
