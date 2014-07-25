@@ -153,6 +153,18 @@ var Scope = util.defClass({
 		return child;
 	},
 
+	$destroy: function(){
+		if(this === this.$$root){
+			return;
+		}
+
+		var index = this.$parent.$$children.indexOf(this);
+		if(index >= 0){
+			this.$parent.$$children.splice(index, 1);
+		}
+
+	},
+
 	$$everyScope: function(fn) {
 		if (fn(this)) {
 			this.$$children.forEach(function(child) {
@@ -164,4 +176,5 @@ var Scope = util.defClass({
 	}
 
 });
+
 
