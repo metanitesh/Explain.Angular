@@ -6,6 +6,7 @@ var Scope = util.defClass({
 		this.$$asyncQueue = [];
 		this.$$phase = null;
 		this.$$postDigestQueue = [];
+		this.$$children = [];
 	},
 
 	$watch: function(watchFn, listenFn) {
@@ -60,6 +61,7 @@ var Scope = util.defClass({
 		var newVal;
 		var oldVal;
 		var dirty;
+		var currentLoop = true;
 		var invoke = function(watcher) {
 		
 			try {
@@ -76,7 +78,7 @@ var Scope = util.defClass({
 				console.error(e.message);
 			}
 		};
-
+		
 		_.forEachRight(this.$$watchCollection, invoke, this);
 		return dirty;
 	},
@@ -116,8 +118,29 @@ var Scope = util.defClass({
 
 	$$postDigest: function(fn) {
 		this.$$postDigestQueue.push(fn);
-	}
+	},
+
+	$new: function(){
+		var child = Object.create(this);
+		child.$$watchCollection = [];
+		child.$$children = [];
+
+		this.$$children.push(child);
+		return child;
+	},
+
+	
 
 });
 
+var scope = new Scope();
+console.log(scope)
+
+var childScope = scope.$new()
+console.log(childScope);
+
+var childScope2 = childScope.$new();
+console.log(childScope2);
+
+childScope2.$$asyncQueue.push(1);
 
