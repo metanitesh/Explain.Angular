@@ -132,8 +132,20 @@ var Scope = util.defClass({
 		this.$$postDigestQueue.push(fn);
 	},
 
-	$new: function() {
-		var child = Object.create(this);
+	$new: function(isolated) {
+		console.log(isolated);
+
+		var child;
+		if(isolated){
+			child = new Scope();
+			child.$$root = this.$$root;
+			child.$$asyncQueue =  this.$$asyncQueue;
+			child.$$postDigestQueue = this.$$postDigestQueue;
+		}else{
+			child = Object.create(this);
+		}
+		
+		child.$parent = this;
 		child.$$watchCollection = [];
 		child.$$children = [];
 
@@ -143,17 +155,13 @@ var Scope = util.defClass({
 
 	$$everyScope: function(fn) {
 		if (fn(this)) {
-
 			this.$$children.forEach(function(child) {
 				child.$$everyScope(fn);
 			});
-
 		} else {
-
 			return false;
 		}
-
-
 	}
 
 });
+
