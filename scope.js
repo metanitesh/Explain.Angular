@@ -5,6 +5,7 @@ var Scope = util.defClass({
 		this.$$lastDirtyWatch = null;
 		this.$$asyncQueue = [];
 		this.$$phase = null;
+		this.$$root = this;
 		this.$$postDigestQueue = [];
 		this.$$children = [];
 	},
@@ -105,7 +106,7 @@ var Scope = util.defClass({
 			return this.$eval(exp);
 		} finally {
 			this.$clearPhase();
-			this.$digest();
+			this.$$root.$digest();
 		}
 	},
 
