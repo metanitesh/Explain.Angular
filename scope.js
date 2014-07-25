@@ -18,10 +18,10 @@ var Scope = util.defClass({
 		};
 
 		this.$$watchCollection.unshift(watchobj);
-		
-		return _.bind(function(){
-			var index = this.$$watchCollection.indexOf(watchobj);	
-			if(index >= 0){
+
+		return _.bind(function() {
+			var index = this.$$watchCollection.indexOf(watchobj);
+			if (index >= 0) {
 				this.$$watchCollection.splice(index, 1);
 			}
 		}, this);
@@ -34,7 +34,7 @@ var Scope = util.defClass({
 
 		this.$beginePhase("$digest");
 		do {
-
+			console.log("in")
 			while (this.$$asyncQueue.length) {
 				var asyncTask = this.$$asyncQueue.shift();
 				asyncTask.scope.$eval(asyncTask.expression);
@@ -58,28 +58,39 @@ var Scope = util.defClass({
 	},
 
 	$$digestonce: function() {
-		var newVal;
-		var oldVal;
+
 		var dirty;
-		var currentLoop = true;
-		var invoke = function(watcher) {
-		
-			try {
-				newVal = watcher.watchFn(this);
-				oldVal = watcher.last;
+		var continueLoop = true;
 
-				if (newVal !== oldVal) {
-					watcher.last = newVal;
-					watcher.listenFn(newVal, oldVal, this);
-					dirty = true;
 
+		this.$$everyScope(function(scope) {
+			var newVal;
+			var oldVal;
+			var invoke = function(watcher) {
+
+				try {
+					newVal = watcher.watchFn(scope);
+					oldVal = watcher.last;
+
+					if (newVal !== oldVal) {
+						watcher.last = newVal;
+						watcher.listenFn(newVal, oldVal, scope);
+						dirty = true;
+
+					}
+
+				} catch (e) {
+					console.error(e.message);
 				}
-			} catch(e){
-				console.error(e.message);
-			}
-		};
-		
-		_.forEachRight(this.$$watchCollection, invoke, this);
+			};
+
+			_.forEachRight(scope.$$watchCollection, invoke, this);
+
+			return true
+		});
+
+
+
 		return dirty;
 	},
 
@@ -120,7 +131,7 @@ var Scope = util.defClass({
 		this.$$postDigestQueue.push(fn);
 	},
 
-	$new: function(){
+	$new: function() {
 		var child = Object.create(this);
 		child.$$watchCollection = [];
 		child.$$children = [];
@@ -129,18 +140,19 @@ var Scope = util.defClass({
 		return child;
 	},
 
-	
+	$$everyScope: function(fn) {
+		if (fn(this)) {
+
+			this.$$children.forEach(function(child) {
+				child.$$everyScope(fn);
+			});
+
+		} else {
+
+			return false;
+		}
+
+
+	}
 
 });
-
-var scope = new Scope();
-console.log(scope)
-
-var childScope = scope.$new()
-console.log(childScope);
-
-var childScope2 = childScope.$new();
-console.log(childScope2);
-
-childScope2.$$asyncQueue.push(1);
-
