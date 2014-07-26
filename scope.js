@@ -182,6 +182,8 @@ var Scope = util.defClass({
 		var oldVal;
 		var self = this;
 		var changeCount = 0;
+		var veryOldValue;
+		var firstRun = false;
 
 		var internalWatchFn = function(scope) {
 			newVal = watchFn(scope);
@@ -241,7 +243,8 @@ var Scope = util.defClass({
 
 		var internalListenFn = function() {
 
-			listnerFn(newVal, oldVal, self);
+			listnerFn(newVal, veryOldVal, self);
+			veryOldVal = _.clone(newVal);
 		};
 
 		return this.$watch(internalWatchFn, internalListenFn);
