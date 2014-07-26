@@ -206,7 +206,25 @@ var Scope = util.defClass({
 						}
 					});
 				} else {
-					
+
+					if(!_.isObject(oldVal) || _.isArray(oldVal)){
+						changeCounter++;
+						oldVal = {};
+					}
+
+					for(var key in newVal){
+						if(oldVal[key] !== newVal[key]){
+							changeCount++;
+							oldVal[key] = newVal[key];
+						}
+					}
+
+					for(var key in oldVal){
+						if(oldVal.hasOwnProperty(key) && !newVal.hasOwnProperty(key)){
+							changeCount++;
+							delete oldVal[key];
+						}
+					}
 				}
 			} else {
 
