@@ -147,7 +147,7 @@ var Scope = util.defClass({
 		child.$parent = this;
 		child.$$watchCollection = [];
 		child.$$children = [];
-		chile.$$listeners = {};
+		child.$$listeners = {};
 		this.$$children.push(child);
 		return child;
 	},
@@ -263,18 +263,15 @@ var Scope = util.defClass({
 		};
 	},
 
-	$$fireEventOnScope: function(eventName, additionalArg) {
-		var event = {
-			name: eventName
-		};
-		var listenerArgs = [event].concat(additionalArg);
+	$$fireEventOnScope: function(eventName, listenerArgs) {
+		
 		var listeners = this.$$listeners[eventName] || [];
 		var i = 0;
-		
-		while (i < listeners.length){
-			if(listeners[i] === null){
+
+		while (i < listeners.length) {
+			if (listeners[i] === null) {
 				listeners.splice(i, 1);
-			} else{
+			} else {
 				listeners[i].apply(null, listenerArgs);
 				i++;
 			}
@@ -284,58 +281,73 @@ var Scope = util.defClass({
 	},
 
 	$emit: function(eventName) {
-		var additionalArg = _.rest(arguments);
-		return this.$$fireEventOnScope(eventName, additionalArg);
+		var event = {
+			name: eventName
+		};
+		var listenerArgs = [event].concat(_.rest(arguments));
 
+		
+		var scope = this;
+		do {
+			scope.$$fireEventOnScope(eventName, listenerArgs);
+			scope = scope.$parent;
+		} while (scope);
+
+		return event;
 	},
 
 	$brodcast: function(eventName) {
-		return this.$$fireEventOnScope(eventName, additionalArg);
+		var event = {
+			name: eventName
+		};
+
+		var listenerArgs = [event].concat(_.rest(arguments));
+
+		scope.$$everyScope(function(scope){
+			scope.$$fireEventOnScope(eventName, listenerArgs);
+			return true;
+		});
+
+		return event;
 	}
 
 });
 
 
 var scope = new Scope();
-var a;
+var child = scope.$new();
 
 
 
-var listen = function(e, a, b) {
-	console.log(e, a, b)
-	console.log("1");
-	f();
-	// a();
+var listen = function(a) {
+	console.log("child")
+	console.log(a);
 };
 
-
-var listen2 = function() {
-	console.log("2")
+var listen2 = function(a) {
+	console.log("parent")
+	console.log(a)
 }
 
 
-var listen3 = function() {
-	console.log("3")
-}
-
-
-var listen4 = function() {
-	console.log("4")
-}
-
-
-f = scope.$on("yello", listen);
+child.$on("yello", listen);
 scope.$on("yello", listen2);
-scope.$on("yello", listen3);
-scope.$on("yello", listen4);
-// var b = scope.$on("yello", listen);
+
+scope.$brodcast("yello"); 
+
+// var listen2 = function() {
+// 	console.log("2")
+// }
 
 
-console.log(scope.$$listeners)
-// scope.$on("yellow", listen)
-
-scope.$emit("yello", "more", "val")
-scope.$emit("yello", "more", "val")
+// var listen3 = function() {
+// 	console.log("3")
+// }
 
 
-// scope.$emit("yello", "more", "val")
+// var listen4 = function() {
+// 	console.log("4")
+// }
+
+
+// scope.$on("yello", listen2);
