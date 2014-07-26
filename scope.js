@@ -35,7 +35,7 @@ var Scope = util.defClass({
 
 		this.$beginePhase("$digest");
 		do {
-			console.log("in")
+
 			while (this.$$asyncQueue.length) {
 				var asyncTask = this.$$asyncQueue.shift();
 				asyncTask.scope.$eval(asyncTask.expression);
@@ -68,6 +68,7 @@ var Scope = util.defClass({
 			var newVal;
 			var oldVal;
 			var invoke = function(watcher) {
+
 
 				try {
 					newVal = watcher.watchFn(scope);
@@ -136,15 +137,15 @@ var Scope = util.defClass({
 		console.log(isolated);
 
 		var child;
-		if(isolated){
+		if (isolated) {
 			child = new Scope();
 			child.$$root = this.$$root;
-			child.$$asyncQueue =  this.$$asyncQueue;
+			child.$$asyncQueue = this.$$asyncQueue;
 			child.$$postDigestQueue = this.$$postDigestQueue;
-		}else{
+		} else {
 			child = Object.create(this);
 		}
-		
+
 		child.$parent = this;
 		child.$$watchCollection = [];
 		child.$$children = [];
@@ -153,13 +154,13 @@ var Scope = util.defClass({
 		return child;
 	},
 
-	$destroy: function(){
-		if(this === this.$$root){
+	$destroy: function() {
+		if (this === this.$$root) {
 			return;
 		}
 
 		var index = this.$parent.$$children.indexOf(this);
-		if(index >= 0){
+		if (index >= 0) {
 			this.$parent.$$children.splice(index, 1);
 		}
 
@@ -173,8 +174,75 @@ var Scope = util.defClass({
 		} else {
 			return false;
 		}
+	},
+
+	$watchCollection: function(watchFn, listnerFn) {
+
+		var newVal;
+		var oldVal;
+		var self = this;
+		var changeCount = 0;
+
+		var internalWatchFn = function(scope) {
+			newVal = watchFn(scope);
+
+			if (_.isObject(newVal)) {
+				if (_.isArray(newVal)) {
+					
+					if(!_.isArray(oldVal)){
+						changeCount++;
+						oldVal = [];
+					}
+
+					if(newVal.length !== oldVal){
+						changeCount++;
+						oldVal.length = newVal.length;
+					}
+
+					_.forEach(newVal, function(newItem, i){
+						if(newItem !== oldVal[i]){
+							changeCount++;
+							oldVal[i] = newItem;
+						}
+					});
+				} else {
+					
+				}
+			} else {
+
+				if (newVal !== oldVal) {
+					changeCount++;
+					
+				}
+				oldVal = newVal;
+				
+			}
+
+			return changeCount;
+		};
+
+		var internalListenFn = function() {
+
+			listnerFn(newVal, oldVal, self);
+		};
+
+		return this.$watch(internalWatchFn, internalListenFn);
 	}
 
 });
 
+var scope = new Scope();
+scope.title = "angular";
 
+scope.$watchCollection(function() {
+	return scope.title;
+}, function(a, b, c) {
+	console.log(a,b,c);
+})
+
+scope.$digest();
+scope.title = "angula2r";
+
+scope.$digest();
+
+// scope.title = "angular";
