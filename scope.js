@@ -248,34 +248,94 @@ var Scope = util.defClass({
 		return this.$watch(internalWatchFn, internalListenFn);
 	},
 
-	$on: function(eventName, listener){
+	$on: function(eventName, listener) {
 		var listeners = this.$$listeners[eventName];
-		if(!listeners){
+		if (!listeners) {
 			this.$$listeners[eventName] = listeners = [];
 		}
 		listeners.push(listener);
+
+		return function() {
+			var index = listeners.indexOf(listener);
+			if (index >= 0) {
+				listeners[index] = null;
+			}
+		};
 	},
 
-	$fireEventOnScope: function(eventName, additionalArg){
-		var event = {name: eventName};
+	$$fireEventOnScope: function(eventName, additionalArg) {
+		var event = {
+			name: eventName
+		};
 		var listenerArgs = [event].concat(additionalArg);
 		var listeners = this.$$listeners[eventName] || [];
-		_.each(listeners, function(listener){
-			listener.apply(null, listenerArgs);
-		});
+		var i = 0;
+		
+		while (i < listeners.length){
+			if(listeners[i] === null){
+				listeners.splice(i, 1);
+			} else{
+				listeners[i].apply(null, listenerArgs);
+				i++;
+			}
+		}
 
 		return event;
 	},
 
-	$emit: function(eventName){
+	$emit: function(eventName) {
 		var additionalArg = _.rest(arguments);
-		return $$fireEventOnScope(eventName, additionalArg);
+		return this.$$fireEventOnScope(eventName, additionalArg);
 
 	},
 
-	$brodcast: function(eventName, additionalArg){
-		return $$fireEventOnScope(eventName, additionalArg);
+	$brodcast: function(eventName) {
+		return this.$$fireEventOnScope(eventName, additionalArg);
 	}
 
 });
 
+
+var scope = new Scope();
+var a;
+
+
+
+var listen = function(e, a, b) {
+	console.log(e, a, b)
+	console.log("1");
+	f();
+	// a();
+};
+
+
+var listen2 = function() {
+	console.log("2")
+}
+
+
+var listen3 = function() {
+	console.log("3")
+}
+
+
+var listen4 = function() {
+	console.log("4")
+}
+
+
+f = scope.$on("yello", listen);
+scope.$on("yello", listen2);
+scope.$on("yello", listen3);
+scope.$on("yello", listen4);
+// var b = scope.$on("yello", listen);
+
+
+console.log(scope.$$listeners)
+// scope.$on("yellow", listen)
+
+scope.$emit("yello", "more", "val")
+scope.$emit("yello", "more", "val")
+
+
+// scope.$emit("yello", "more", "val")
