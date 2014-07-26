@@ -7,6 +7,7 @@ var Scope = util.defClass({
 		this.$$root = this;
 		this.$$postDigestQueue = [];
 		this.$$children = [];
+		this.$$listeners = {};
 	},
 
 	$watch: function(watchFn, listenFn) {
@@ -146,7 +147,7 @@ var Scope = util.defClass({
 		child.$parent = this;
 		child.$$watchCollection = [];
 		child.$$children = [];
-
+		chile.$$listeners = {};
 		this.$$children.push(child);
 		return child;
 	},
@@ -187,39 +188,39 @@ var Scope = util.defClass({
 
 			if (_.isObject(newVal)) {
 				if (_.isArray(newVal)) {
-					
-					if(!_.isArray(oldVal)){
+
+					if (!_.isArray(oldVal)) {
 						changeCount++;
 						oldVal = [];
 					}
 
-					if(newVal.length !== oldVal.length){
+					if (newVal.length !== oldVal.length) {
 						changeCount++;
 						oldVal.length = newVal.length;
 					}
 
-					_.forEach(newVal, function(newItem, i){
-						if(newItem !== oldVal[i]){
+					_.forEach(newVal, function(newItem, i) {
+						if (newItem !== oldVal[i]) {
 							changeCount++;
 							oldVal[i] = newItem;
 						}
 					});
 				} else {
 
-					if(!_.isObject(oldVal) || _.isArray(oldVal)){
+					if (!_.isObject(oldVal) || _.isArray(oldVal)) {
 						changeCount++;
 						oldVal = {};
 					}
 
-					for(var key in newVal){
-						if(oldVal[key] !== newVal[key]){
+					for (var key in newVal) {
+						if (oldVal[key] !== newVal[key]) {
 							changeCount++;
 							oldVal[key] = newVal[key];
 						}
 					}
 
-					for(var key in oldVal){
-						if(oldVal.hasOwnProperty(key) && !newVal.hasOwnProperty(key)){
+					for (var key in oldVal) {
+						if (oldVal.hasOwnProperty(key) && !newVal.hasOwnProperty(key)) {
 							changeCount++;
 							delete oldVal[key];
 						}
@@ -229,10 +230,10 @@ var Scope = util.defClass({
 
 				if (newVal !== oldVal) {
 					changeCount++;
-					
+
 				}
 				oldVal = newVal;
-				
+
 			}
 
 			return changeCount;
@@ -245,48 +246,36 @@ var Scope = util.defClass({
 		};
 
 		return this.$watch(internalWatchFn, internalListenFn);
+	},
+
+	$on: function(eventName, listener){
+		var listeners = this.$$listeners[eventName];
+		if(!listeners){
+			this.$$listeners[eventName] = listeners = [];
+		}
+		listeners.push(listener);
+	},
+
+	$fireEventOnScope: function(eventName, additionalArg){
+		var event = {name: eventName};
+		var listenerArgs = [event].concat(additionalArg);
+		var listeners = this.$$listeners[eventName] || [];
+		_.each(listeners, function(listener){
+			listener.apply(null, listenerArgs);
+		});
+
+		return event;
+	},
+
+	$emit: function(eventName){
+		var additionalArg = _.rest(arguments);
+		return $$fireEventOnScope(eventName, additionalArg);
+
+	},
+
+	$brodcast: function(eventName, additionalArg){
+		return $$fireEventOnScope(eventName, additionalArg);
 	}
 
 });
 
-var scope = new Scope();
-scope.title = "framework";
-scope.obj = {
-	type: "great"
-}
-
-scope.arr = [1,3,4]
-
-watchFn1 = function(scope){
-	return scope.title;
-};
-
-watchFn2 = function(scope){
-	return scope.obj;
-};
-
-watchFn3 = function(scope){
-	return scope.arr;
-};
-
-listenFn1 = function(a,b,c){
-	console.log(a,b,c)
-};
-
-listenFn2 = function(a,b,c){
-	console.log(a,b,c)
-};
-
-listenFn3 = function(a,b,c){
-	console.log(a,b,c)
-};
-
-scope.$watchCollection(watchFn1, listenFn1)
-scope.$watchCollection(watchFn2, listenFn2)
-scope.$watchCollection(watchFn3, listenFn3)
-scope.$digest();
-
-scope.title = "other"
-scope.obj.work = "hard"
-scope.arr[2] = 9;
-scope.$digest();
