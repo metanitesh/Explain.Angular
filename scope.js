@@ -2,7 +2,6 @@ var Scope = util.defClass({
 
 	constructor: function() {
 		this.$$watchCollection = [];
-		this.$$lastDirtyWatch = null;
 		this.$$asyncQueue = [];
 		this.$$phase = null;
 		this.$$root = this;
@@ -134,8 +133,6 @@ var Scope = util.defClass({
 	},
 
 	$new: function(isolated) {
-		console.log(isolated);
-
 		var child;
 		if (isolated) {
 			child = new Scope();
@@ -182,8 +179,8 @@ var Scope = util.defClass({
 		var oldVal;
 		var self = this;
 		var changeCount = 0;
-		var veryOldValue;
-		var firstRun = false;
+		var veryOldVal = 1;
+		console.log(this);
 
 		var internalWatchFn = function(scope) {
 			newVal = watchFn(scope);
@@ -196,7 +193,7 @@ var Scope = util.defClass({
 						oldVal = [];
 					}
 
-					if(newVal.length !== oldVal){
+					if(newVal.length !== oldVal.length){
 						changeCount++;
 						oldVal.length = newVal.length;
 					}
@@ -210,7 +207,7 @@ var Scope = util.defClass({
 				} else {
 
 					if(!_.isObject(oldVal) || _.isArray(oldVal)){
-						changeCounter++;
+						changeCount++;
 						oldVal = {};
 					}
 
@@ -242,7 +239,7 @@ var Scope = util.defClass({
 		};
 
 		var internalListenFn = function() {
-
+			console.log("from listner", this);
 			listnerFn(newVal, veryOldVal, self);
 			veryOldVal = _.clone(newVal);
 		};
@@ -253,17 +250,43 @@ var Scope = util.defClass({
 });
 
 var scope = new Scope();
-scope.title = "angular";
+scope.title = "framework";
+scope.obj = {
+	type: "great"
+}
 
-scope.$watchCollection(function() {
+scope.arr = [1,3,4]
+
+watchFn1 = function(scope){
 	return scope.title;
-}, function(a, b, c) {
-	console.log(a,b,c);
-})
+};
 
+watchFn2 = function(scope){
+	return scope.obj;
+};
+
+watchFn3 = function(scope){
+	return scope.arr;
+};
+
+listenFn1 = function(a,b,c){
+	console.log(a,b,c)
+};
+
+listenFn2 = function(a,b,c){
+	console.log(a,b,c)
+};
+
+listenFn3 = function(a,b,c){
+	console.log(a,b,c)
+};
+
+scope.$watchCollection(watchFn1, listenFn1)
+scope.$watchCollection(watchFn2, listenFn2)
+scope.$watchCollection(watchFn3, listenFn3)
 scope.$digest();
-scope.title = "angula2r";
 
+scope.title = "other"
+scope.obj.work = "hard"
+scope.arr[2] = 9;
 scope.$digest();
-
-// scope.title = "angular";
