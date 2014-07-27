@@ -282,13 +282,15 @@ var Scope = util.defClass({
 
 	$emit: function(eventName) {
 		var event = {
-			name: eventName
+			name: eventName,
+			targetScope: this
 		};
 		var listenerArgs = [event].concat(_.rest(arguments));
 
 		
 		var scope = this;
 		do {
+			event.currentScope = scope;
 			scope.$$fireEventOnScope(eventName, listenerArgs);
 			scope = scope.$parent;
 		} while (scope);
@@ -297,13 +299,16 @@ var Scope = util.defClass({
 	},
 
 	$brodcast: function(eventName) {
+		console.log(this);
 		var event = {
-			name: eventName
+			name: eventName,
+			targetScope: this
 		};
 
 		var listenerArgs = [event].concat(_.rest(arguments));
 
 		scope.$$everyScope(function(scope){
+			event.currentScope = scope;
 			scope.$$fireEventOnScope(eventName, listenerArgs);
 			return true;
 		});
@@ -313,41 +318,3 @@ var Scope = util.defClass({
 
 });
 
-
-var scope = new Scope();
-var child = scope.$new();
-
-
-
-var listen = function(a) {
-	console.log("child")
-	console.log(a);
-};
-
-var listen2 = function(a) {
-	console.log("parent")
-	console.log(a)
-}
-
-
-child.$on("yello", listen);
-scope.$on("yello", listen2);
-
-scope.$brodcast("yello"); 
-
-// var listen2 = function() {
-// 	console.log("2")
-// }
-
-
-// var listen3 = function() {
-// 	console.log("3")
-// }
-
-
-// var listen4 = function() {
-// 	console.log("4")
-// }
-
-
-// scope.$on("yello", listen2);
