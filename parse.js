@@ -100,10 +100,6 @@ var Lexer = util.defClass({
 			}
 
 			this.index++;
-
-
-			// console.log(this.text[this.index]);
-
 		}
 
 		var token = {
@@ -121,6 +117,10 @@ var Lexer = util.defClass({
 
 	},
 
+	isWhiteSpace: function(ch) {
+		return (ch === ' ' || ch === '\r' || ch === '\t' || ch === '\n' );
+	},
+
 	lex: function(str) {
 
 		this.text = str;
@@ -135,7 +135,10 @@ var Lexer = util.defClass({
 				this.readString(this.ch);
 			} else if (this.isIdentifier(this.ch)) {
 				this.readIdentifier();
-			} else {
+			} else if(this.isWhiteSpace(this.ch)){
+				this.index++;
+			}
+			else {
 				throw "woo";
 			}
 		}
@@ -177,4 +180,4 @@ function parse(exp) {
 	return parser.parse(exp);
 }
 
-console.log(parse('"some"123true'));
+console.log(parse('"some" 123 true'));
