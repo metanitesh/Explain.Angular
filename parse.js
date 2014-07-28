@@ -12,12 +12,17 @@ var Lexer = util.defClass({
 
 	peek: function() {
 		if (this.index < this.text.length - 1) {
-			return this.text[index + 1];
+			return this.text[this.index + 1];
 		} else {
 			return false;
 		}
 
 	},
+
+	isExpOperator: function(ch) {
+		return (ch === "-") || (ch === "+") || this.isNumber(ch);
+	},
+
 	readNumber: function() {
 		var number = "";
 
@@ -27,7 +32,14 @@ var Lexer = util.defClass({
 			if (this.isNumber(ch) || ch === '.') {
 				number += ch;
 			} else {
-				break;
+				
+				if (ch.toLowerCase() === "e") {
+					number += ch;
+				} else if (this.isExpOperator(ch)) {
+					number += ch;
+				} else {
+					break;
+				}
 			}
 			this.index++;
 		}
@@ -93,4 +105,4 @@ function parse(exp) {
 
 
 
-console.log(parse("0.2232")());
+console.log(parse("12e+2")());
