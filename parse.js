@@ -1,3 +1,10 @@
+var OPERATORS = {
+	'null': _.constant(null),
+	'true': _.constant(true),
+	'false': _.constant(false)
+};
+
+
 var Lexer = util.defClass({
 
 	constructor: function() {
@@ -54,7 +61,7 @@ var Lexer = util.defClass({
 		});
 	},
 
-	readString: function() {
+	readString: function(quote) {
 		this.index++;
 		var string = '';
 		while (this.index < this.text.length) {
@@ -62,9 +69,10 @@ var Lexer = util.defClass({
 			var ch = this.text[this.index];
 			this.index++;
 
-			if (ch === '"') {
+			if (ch === quote) {
 				this.tokens.push({
-					fn: _.constant(string)
+					fn: _.constant(string),
+					json: true
 				});
 				return;
 			}
@@ -73,6 +81,44 @@ var Lexer = util.defClass({
 		}
 
 		throw ("unmatched quote");
+	},
+
+	isIdentifier: function(ch) {
+		return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch === '_') || (ch === '$');
+	},
+
+	readIdentifier: function() {
+		var string = "";
+		while (this.index < this.text.length) {
+			var ch = this.text[this.index];
+
+
+			if (this.isIdentifier(ch) || this.isNumber(ch)) {
+				string += ch;
+			} else {
+				break;
+			}
+
+			this.index++;
+
+
+			// console.log(this.text[this.index]);
+
+		}
+
+		var token = {
+			text: string
+		};
+
+
+		if (OPERATORS.hasOwnProperty(string)) {
+			token.fn = OPERATORS[string];
+			token.json = true;
+		}
+
+		this.tokens.push(token);
+
+
 	},
 
 	lex: function(str) {
@@ -85,9 +131,10 @@ var Lexer = util.defClass({
 
 			if (this.isNumber(this.ch)) {
 				this.readNumber();
-			} else if (this.ch === '"') {
-				this.readString();
-
+			} else if ((this.ch === '"') || (this.ch === '\'')) {
+				this.readString(this.ch);
+			} else if (this.isIdentifier(this.ch)) {
+				this.readIdentifier();
 			} else {
 				throw "woo";
 			}
@@ -124,9 +171,10 @@ var Parser = util.defClass({
 
 
 function parse(exp) {
+
 	var lexer = new Lexer();
 	var parser = new Parser(lexer);
-	return parser.parse(exp)[1].fn();
+	return parser.parse(exp);
 }
 
-console.log(parse('123123123"some"'));
+console.log(parse('"some"123true'));
