@@ -1,16 +1,51 @@
-function parse (exp){
-	var lexer = new Lexer();
-	var parser = new Parser(lexer);
-	return parser.parse(exp);
-}
-
 var Lexer = util.defClass({
 	constructor: function(){
 
 	},
 
+	isNumber : function(ch){
+		return '0' <= ch && ch <= '9';
+	},
+
+	readNumber: function(){
+		var number = "";
+		
+		while(this.index < this.text.length){
+
+			var ch = this.text[this.index];
+			if(this.isNumber(ch)){
+				number += ch;
+			}else{
+				break;
+			}
+			this.index++;
+		}
+
+		number = 1*number;
+		
+		this.tokens.push({
+			text: number,
+			fn: _.constant(number)
+		});
+	},
+
 	lex: function(str){
-		return str;
+		this.text = str;
+		this.index = 0;
+		this.ch = undefined;
+		this.tokens = [];
+
+		while(this.index<this.text.length){
+			
+			this.ch = this.text[this.index];
+			if(this.isNumber(this.ch)){
+				this.readNumber();
+			}else{
+				throw "woo";
+			}
+		}
+
+		return this.tokens;
 	}
 });
 
@@ -21,10 +56,20 @@ var Parser = util.defClass({
 	},
 
 	parse: function(exp){
-		this.token = this.lexer.lex(exp);
-		return this.token;
+		return this.lexer.lex(exp);
 	}
 });
 
-console.log(parse("42"));
 
+
+function parse (exp){
+	var lexer = new Lexer();
+	var parser = new Parser(lexer);
+	return parser.parse(exp);
+}
+
+
+
+console.log(parse("1122")[0].fn());
+
+ 
