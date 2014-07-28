@@ -1,4 +1,5 @@
 var Lexer = util.defClass({
+
 	constructor: function() {
 		this.text = undefined;
 		this.index = 0;
@@ -32,7 +33,7 @@ var Lexer = util.defClass({
 			if (this.isNumber(ch) || ch === '.') {
 				number += ch;
 			} else {
-				
+
 				if (ch.toLowerCase() === "e") {
 					number += ch;
 				} else if (this.isExpOperator(ch)) {
@@ -53,6 +54,27 @@ var Lexer = util.defClass({
 		});
 	},
 
+	readString: function() {
+		this.index++;
+		var string = '';
+		while (this.index < this.text.length) {
+
+			var ch = this.text[this.index];
+			this.index++;
+
+			if (ch === '"') {
+				this.tokens.push({
+					fn: _.constant(string)
+				});
+				return;
+			}
+
+			string = string + ch;
+		}
+
+		throw ("unmatched quote");
+	},
+
 	lex: function(str) {
 
 		this.text = str;
@@ -60,8 +82,12 @@ var Lexer = util.defClass({
 
 			this.ch = this.text[this.index];
 
+
 			if (this.isNumber(this.ch)) {
 				this.readNumber();
+			} else if (this.ch === '"') {
+				this.readString();
+
 			} else {
 				throw "woo";
 			}
@@ -91,7 +117,7 @@ var Parser = util.defClass({
 
 	parse: function(exp) {
 		this.tokens = this.lexer.lex(exp);
-		return this.primary();
+		return this.tokens;
 	}
 });
 
@@ -100,9 +126,7 @@ var Parser = util.defClass({
 function parse(exp) {
 	var lexer = new Lexer();
 	var parser = new Parser(lexer);
-	return parser.parse(exp);
+	return parser.parse(exp)[1].fn();
 }
 
-
-
-console.log(parse("12e+2")());
+console.log(parse('123123123"some"'));
