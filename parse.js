@@ -136,7 +136,7 @@ var Lexer = util.defClass({
 				this.readIdentifier();
 			} else if (this.isWhiteSpace(this.ch)) {
 				this.index++;
-			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',') {
+			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',' || this.ch === '{' || this.ch === '}' || this.ch === ':') {
 				this.tokens.push({
 					text: this.ch,
 					json: true
@@ -160,61 +160,91 @@ var Parser = util.defClass({
 		this.tokens = [];
 	},
 
-	expect: function(e){
+	expect: function(e) {
 		var token = this.peek(e);
-		if(token){
+		if (token) {
 			return this.tokens.shift();
 		}
 	},
 
-	peek : function(e){
-		if(this.tokens.length){
-			if(this.tokens[0].text === e || !e){
+	peek: function(e) {
+		if (this.tokens.length) {
+			if (this.tokens[0].text === e || !e) {
 				return this.tokens[0];
 			}
 		}
 	},
 
-	consume: function(e){
-		if(!this.expect(e)){
+	consume: function(e) {
+		if (!this.expect(e)) {
 			throw "unexpected string";
 		}
 	},
 
-	primary: function(){
+	primary: function() {
 		var primary;
 
-		if(this.expect("[")){
-
+		if (this.expect("[")) {
 			primary = this.arrayDeclaration();
-		}else{
+		} else if (this.expect("{")) {
+			primary = this.object()
+		} else {
 			var token = this.expect();
 			primary = token.fn;
-			
+
 		}
 		return primary;
-		
-		
+
+
 	},
 
-	arrayDeclaration: function(){
+	object: function() {
+		var keyValue = [];
+
+		if(!this.peek("}")){
+			do{
+				var key = this.primary()();
+				this.consume(":");
+				this.tokens[0]
+				var val = this.primary()();
+				
+
+				keyValue.push({
+					key:key,
+					val: val
+				});
+				
+			} while (this.expect(","));
+		}
+
+		this.consume("}");
+		
+		var objectFn =  function(){
+			var obj = {};
+			_.each(keyValue, function(kv){
+				obj[kv.key] = kv.val;
+			});
+			return obj;
+		};
+
+		return objectFn;
+	},
+	arrayDeclaration: function() {
 
 		var elementsFns = [];
-		if(!this.peek(']')){
-			do{
+		if (!this.peek(']')) {
+			do {
 				elementsFns.push(this.primary());
 			} while (this.expect(','));
 		}
 
 		this.consume(']');
 
-		return function(){
-			return _.map(elementsFns, function(elementFn){
+		return function() {
+			return _.map(elementsFns, function(elementFn) {
 				return elementFn();
 			});
 		};
-	
-
 	},
 
 	parse: function(exp) {
@@ -233,4 +263,4 @@ function parse(exp) {
 	return parser.parse(exp);
 }
 
-console.log(parse('[1,2,3,4, [1,3]]')());	
+console.log(parse("{'name': 'nitesh', 'life' : 'cool'}")())
