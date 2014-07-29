@@ -118,7 +118,7 @@ var Lexer = util.defClass({
 	},
 
 	isWhiteSpace: function(ch) {
-		return (ch === ' ' || ch === '\r' || ch === '\t' || ch === '\n' );
+		return (ch === ' ' || ch === '\r' || ch === '\t' || ch === '\n');
 	},
 
 	lex: function(str) {
@@ -128,17 +128,22 @@ var Lexer = util.defClass({
 
 			this.ch = this.text[this.index];
 
-
 			if (this.isNumber(this.ch)) {
 				this.readNumber();
 			} else if ((this.ch === '"') || (this.ch === '\'')) {
 				this.readString(this.ch);
 			} else if (this.isIdentifier(this.ch)) {
 				this.readIdentifier();
-			} else if(this.isWhiteSpace(this.ch)){
+			} else if (this.isWhiteSpace(this.ch)) {
 				this.index++;
-			}
-			else {
+			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',') {
+				this.tokens.push({
+					text: this.ch,
+					json: true
+				});
+
+				this.index++;
+			} else {
 				throw "woo";
 			}
 		}
@@ -155,19 +160,66 @@ var Parser = util.defClass({
 		this.tokens = [];
 	},
 
-	primary: function() {
-		var token = this.tokens[0];
-		var primary = token.fn;
-		if (token.json) {
-			primary.constant = true;
-			primary.literal = true;
+	expect: function(e){
+		var token = this.peek(e);
+		if(token){
+			return this.tokens.shift();
+		}
+	},
+
+	peek : function(e){
+		if(this.tokens.length){
+			if(this.tokens[0].text === e || !e){
+				return this.tokens[0];
+			}
+		}
+	},
+
+	consume: function(e){
+		if(!this.expect(e)){
+			throw "unexpected string";
+		}
+	},
+
+	primary: function(){
+		var primary;
+
+		if(this.expect("[")){
+
+			primary = this.arrayDeclaration();
+		}else{
+			var token = this.expect();
+			primary = token.fn;
+			
 		}
 		return primary;
+		
+		
+	},
+
+	arrayDeclaration: function(){
+
+		var elementsFns = [];
+		if(!this.peek(']')){
+			do{
+				elementsFns.push(this.primary());
+			} while (this.expect(','));
+		}
+
+		this.consume(']');
+
+		return function(){
+			return _.map(elementsFns, function(elementFn){
+				return elementFn();
+			});
+		};
+	
+
 	},
 
 	parse: function(exp) {
 		this.tokens = this.lexer.lex(exp);
-		return this.tokens;
+		return (this.primary());
 	}
 });
 
@@ -177,7 +229,8 @@ function parse(exp) {
 
 	var lexer = new Lexer();
 	var parser = new Parser(lexer);
+
 	return parser.parse(exp);
 }
 
-console.log(parse('"some" 123 true'));
+console.log(parse('[1,2,3,4, [1,3]]')());	
