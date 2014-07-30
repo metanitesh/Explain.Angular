@@ -4,6 +4,18 @@ var OPERATORS = {
 	'false': _.constant(false)
 };
 
+var getterFn = function(indent){
+	var indent = indent.split(".");
+	console.log([indent[0]indent[1])	
+	return function(scope){
+		if(scope){
+			// console.log(scope[indent[0]])
+			// return scope[indent[0]indent[1]];
+		} else {
+			return undefined;
+		}
+	}
+}
 
 var Lexer = util.defClass({
 
@@ -93,7 +105,7 @@ var Lexer = util.defClass({
 			var ch = this.text[this.index];
 
 
-			if (this.isIdentifier(ch) || this.isNumber(ch)) {
+			if (ch === "." || this.isIdentifier(ch) || this.isNumber(ch)) {
 				string += ch;
 			} else {
 				break;
@@ -102,6 +114,7 @@ var Lexer = util.defClass({
 			this.index++;
 		}
 
+		console.log(string);
 		var token = {
 			text: string
 		};
@@ -110,12 +123,16 @@ var Lexer = util.defClass({
 		if (OPERATORS.hasOwnProperty(string)) {
 			token.fn = OPERATORS[string];
 			token.json = true;
+		} else {
+			token.fn = getterFn(string);
 		}
 
 		this.tokens.push(token);
 
 
 	},
+
+
 
 	isWhiteSpace: function(ch) {
 		return (ch === ' ' || ch === '\r' || ch === '\t' || ch === '\n');
@@ -201,27 +218,27 @@ var Parser = util.defClass({
 	object: function() {
 		var keyValue = [];
 
-		if(!this.peek("}")){
-			do{
+		if (!this.peek("}")) {
+			do {
 				var key = this.primary()();
 				this.consume(":");
 				this.tokens[0]
 				var val = this.primary()();
-				
+
 
 				keyValue.push({
-					key:key,
+					key: key,
 					val: val
 				});
-				
+
 			} while (this.expect(","));
 		}
 
 		this.consume("}");
-		
-		var objectFn =  function(){
+
+		var objectFn = function() {
 			var obj = {};
-			_.each(keyValue, function(kv){
+			_.each(keyValue, function(kv) {
 				obj[kv.key] = kv.val;
 			});
 			return obj;
@@ -248,19 +265,32 @@ var Parser = util.defClass({
 	},
 
 	parse: function(exp) {
+
 		this.tokens = this.lexer.lex(exp);
+
 		return (this.primary());
 	}
 });
 
 
 
+
 function parse(exp) {
 
-	var lexer = new Lexer();
-	var parser = new Parser(lexer);
-
-	return parser.parse(exp);
+	switch (typeof exp) {
+		case "string":
+			var lexer = new Lexer();
+			var parser = new Parser(lexer);
+			return parser.parse(exp);
+		case "function":
+			return exp;
+		default:
+			return _.noop;
+	}
+	
 }
 
-console.log(parse("{'name': 'nitesh', 'life' : 'cool'}")())
+console.log(parse("my.title")({my:{title: "myVal"}}))
+
+// console.log(parse("'hello'"))
+// console.log(parse(true))
