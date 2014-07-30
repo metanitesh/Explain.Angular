@@ -4,17 +4,60 @@ var OPERATORS = {
 	'false': _.constant(false)
 };
 
-var getterFn = function(indent){
-	var indent = indent.split(".");
-	console.log([indent[0]indent[1])	
+var simpleGetterFn1 = function(key){
 	return function(scope){
-		if(scope){
-			// console.log(scope[indent[0]])
-			// return scope[indent[0]indent[1]];
-		} else {
+		return (scope) ? scope[key] : undefined;
+	};
+};
+
+var simpleGetterFn2 = function(key1, key2){
+
+	return function(scope){
+		if(!scope){
 			return undefined;
 		}
+
+		scope = scope[key1];
+		return (scope) ? scope[key2] : undefined;
 	}
+};
+
+var generateGetterFn = function(pathKeys){
+	console.log(pathKeys);
+	var code = "";
+
+	_.each(pathKeys, function(pathKey){
+		code += " if(!scope) {return undefined};";
+		code += "scope = scope['"+pathKey+"'];";
+	});
+
+	code+= "return scope;";
+
+	return new Function("scope", code);
+
+};
+
+var getterFn = function(indent){
+	var pathKey = indent.split(".");
+
+	if(pathKey.length === 1){
+		return simpleGetterFn1(pathKey[0]);
+	} else if(pathKey.length === 2){
+		return simpleGetterFn2(pathKey[0], pathKey[1]);
+	} else {
+		return generateGetterFn(pathKey)
+	}
+
+
+
+	// return function(scope){
+	// 	if(scope){
+	// 		console.log(scope[indent[0]])
+	// 		return scope[indent[0]][indent[1]];
+	// 	} else {
+	// 		return undefined;
+	// 	}
+	// }
 }
 
 var Lexer = util.defClass({
@@ -290,7 +333,7 @@ function parse(exp) {
 	
 }
 
-console.log(parse("my.title")({my:{title: "myVal"}}))
+console.log(parse("my.title.target")({my: {title: {target: "yo"}}}))
 
 // console.log(parse("'hello'"))
 // console.log(parse(true))
