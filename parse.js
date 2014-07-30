@@ -19,20 +19,19 @@ var simpleGetterFn2 = function(key1, key2){
 
 		scope = scope[key1];
 		return (scope) ? scope[key2] : undefined;
-	}
+	};
 };
 
 var generateGetterFn = function(pathKeys){
-	console.log(pathKeys);
+
 	var code = "";
 
 	_.each(pathKeys, function(pathKey){
-		code += " if(!scope) {return undefined};";
-		code += "scope = scope['"+pathKey+"'];";
+		code += "if(!scope) {return undefined};\n";
+		code += "scope = scope['"+pathKey+"'];\n";
 	});
 
 	code+= "return scope;";
-
 	return new Function("scope", code);
 
 };
@@ -45,20 +44,9 @@ var getterFn = function(indent){
 	} else if(pathKey.length === 2){
 		return simpleGetterFn2(pathKey[0], pathKey[1]);
 	} else {
-		return generateGetterFn(pathKey)
+		return generateGetterFn(pathKey);
 	}
-
-
-
-	// return function(scope){
-	// 	if(scope){
-	// 		console.log(scope[indent[0]])
-	// 		return scope[indent[0]][indent[1]];
-	// 	} else {
-	// 		return undefined;
-	// 	}
-	// }
-}
+};
 
 var Lexer = util.defClass({
 
@@ -157,7 +145,6 @@ var Lexer = util.defClass({
 			this.index++;
 		}
 
-		console.log(string);
 		var token = {
 			text: string
 		};
@@ -247,15 +234,39 @@ var Parser = util.defClass({
 		if (this.expect("[")) {
 			primary = this.arrayDeclaration();
 		} else if (this.expect("{")) {
-			primary = this.object()
+			primary = this.object();
 		} else {
 			var token = this.expect();
+			console.log(token)
 			primary = token.fn;
 
 		}
+
+		if(this.expect("[")){
+			primary = this.objectIndex(primary)
+		}
+
 		return primary;
 
 
+	},
+
+	objectIndex: function(objFn){
+		var indexFn = this.primary();
+
+		this.consume("]");
+
+		console.log("objFn", objFn)
+		console.log("indexFn", indexFn)
+		return function(scope){
+			var obj =  objFn(scope);
+			console.log("obj", obj);
+			var index =  indexFn(obj);
+			console.log("index", index)
+			return index;
+		}
+		// console.log(this.primary()(prima))
+		// console.log(primary());
 	},
 
 	object: function() {
@@ -333,7 +344,10 @@ function parse(exp) {
 	
 }
 
-console.log(parse("my.title.target")({my: {title: {target: "yo"}}}))
+// console.log(parse("my.title.target")({my: {title: {target: "yo"}}}))
+// console.log(parse("my.title.target")({my: {title: {target: "yo"}}}))
+// console.log(parse("my")({my: "some"}))
+console.log(parse("my[other]")({my:{other: "some"}}))
 
 // console.log(parse("'hello'"))
 // console.log(parse(true))
