@@ -10,6 +10,12 @@ var simpleGetterFn1 = function(key){
 	};
 };
 
+
+var setter = function(object, key, value){
+	object[key] = value;
+	return value;
+};
+
 var simpleGetterFn2 = function(key1, key2){
 
 	return function(scope){
@@ -155,6 +161,9 @@ var Lexer = util.defClass({
 			token.json = true;
 		} else {
 			token.fn = getterFn(string);
+			token.fn.assign = function(self, value){
+				return setter(self, string, value);
+			};
 		}
 
 		this.tokens.push(token);
@@ -183,7 +192,7 @@ var Lexer = util.defClass({
 				this.readIdentifier();
 			} else if (this.isWhiteSpace(this.ch)) {
 				this.index++;
-			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',' || this.ch === '{' || this.ch === '}' || this.ch === ':') {
+			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',' || this.ch === '{' || this.ch === '}' || this.ch === ':', this.ch === '=' ) {
 				this.tokens.push({
 					text: this.ch,
 					json: true
@@ -231,44 +240,26 @@ var Parser = util.defClass({
 	primary: function() {
 		var primary;
 
+
+
 		if (this.expect("[")) {
 			primary = this.arrayDeclaration();
 		} else if (this.expect("{")) {
-			primary = this.object();
+			primary = this.object()
 		} else {
 			var token = this.expect();
-			console.log(token)
 			primary = token.fn;
 
 		}
-
-		if(this.expect("[")){
-			primary = this.objectIndex(primary)
-		}
+		
+		
 
 		return primary;
 
 
 	},
 
-	objectIndex: function(objFn){
-		var indexFn = this.primary();
-
-		this.consume("]");
-
-		console.log("objFn", objFn)
-		console.log("indexFn", indexFn)
-		return function(scope){
-			var obj =  objFn(scope);
-			console.log("obj", obj);
-			var index =  indexFn(obj);
-			console.log("index", index)
-			return index;
-		}
-		// console.log(this.primary()(prima))
-		// console.log(primary());
-	},
-
+	
 	object: function() {
 		var keyValue = [];
 
@@ -289,6 +280,7 @@ var Parser = util.defClass({
 		}
 
 		this.consume("}");
+
 
 		var objectFn = function() {
 			var obj = {};
@@ -318,15 +310,27 @@ var Parser = util.defClass({
 		};
 	},
 
+	assignment : function(){
+		var left = this.primary();
+		console.log(left)
+		if(this.expect("=")){
+			var right = this.primary();
+			console.log("woo")
+			return function(scope){
+				return left.assign(scope, right(scope));
+			}
+		}
+
+		return left;
+	},
+
 	parse: function(exp) {
 
 		this.tokens = this.lexer.lex(exp);
-
-		return (this.primary());
+		// console.log(this.tokens);
+		return (this.assignment());
 	}
 });
-
-
 
 
 function parse(exp) {
@@ -343,11 +347,9 @@ function parse(exp) {
 	}
 	
 }
+var a= {foo: 400};
 
-// console.log(parse("my.title.target")({my: {title: {target: "yo"}}}))
-// console.log(parse("my.title.target")({my: {title: {target: "yo"}}}))
-// console.log(parse("my")({my: "some"}))
-console.log(parse("my[other]")({my:{other: "some"}}))
+console.log(parse("foo = 20")(a));
 
-// console.log(parse("'hello'"))
-// console.log(parse(true))
+console.log(a)
+
