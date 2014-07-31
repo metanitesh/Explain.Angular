@@ -104,7 +104,6 @@ var Lexer = util.defClass({
 		number = 1 * number;
 
 		this.tokens.push({
-			text: number,
 			fn: _.constant(number),
 			json: true
 		});
@@ -200,7 +199,7 @@ var Lexer = util.defClass({
 
 				this.index++;
 			} else {
-				throw "woo";
+				throw "unexpected token --> " + this.ch;
 			}
 		}
 
@@ -312,13 +311,11 @@ var Parser = util.defClass({
 
 	assignment : function(){
 		var left = this.primary();
-		console.log(left)
 		if(this.expect("=")){
 			var right = this.primary();
-			console.log("woo")
 			return function(scope){
 				return left.assign(scope, right(scope));
-			}
+			};
 		}
 
 		return left;
@@ -327,7 +324,6 @@ var Parser = util.defClass({
 	parse: function(exp) {
 
 		this.tokens = this.lexer.lex(exp);
-		// console.log(this.tokens);
 		return (this.assignment());
 	}
 });
@@ -347,9 +343,6 @@ function parse(exp) {
 	}
 	
 }
-var a= {foo: 400};
 
-console.log(parse("foo = 20")(a));
-
-console.log(a)
+console.log(parse("a+b"));
 
