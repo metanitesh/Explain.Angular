@@ -11,7 +11,6 @@ function createInjector(modulesToLoad) {
 
 	function invoke(fn, self) {
 		
-
 		var args = _.map(annotate(fn), function(token) {
 			return cache[token];
 		});
@@ -40,6 +39,13 @@ function createInjector(modulesToLoad) {
 		
 	}
 
+	function instantiate(fn){
+		var Parent = _.isArray(fn) ? _.last(fn) : fn;
+		var obj = Object.create(Parent.prototype);
+		invoke(fn, obj);
+		return obj;
+	}
+
 	_.forEach(modulesToLoad, function loadModule(moduleName) {
 		if (!loadedModules.hasOwnProperty(moduleName)) {
 
@@ -66,7 +72,8 @@ function createInjector(modulesToLoad) {
 			return cache[key];
 		},
 		invoke: invoke,
-		annotate: annotate
+		annotate: annotate,
+		instantiate: instantiate
 	};
 }
 
@@ -78,9 +85,9 @@ angular.module("myApp").constant("b", 2);
 angular.module("myApp").constant("name", "nitesh");
 
 var fn = function(name,a) {
-	return name + a;
+	this.result = name + a;
 };
 
 
 var inject = createInjector(["myApp"]);
-console.log(inject.invoke(["name", "a", fn]));
+console.log(inject.instantiate(["name", "a", fn]));
