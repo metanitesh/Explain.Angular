@@ -11,9 +11,14 @@ function createInjector(modulesToLoad) {
 
 	function invoke(fn, self) {
 		
-		var args = _.map(fn.$inject, function(token) {
+
+		var args = _.map(annotate(fn), function(token) {
 			return cache[token];
 		});
+
+		if(_.isArray(fn)){
+			fn = _.last(fn);
+		}
 
 		return fn.apply(self, args);
 	}
@@ -25,8 +30,10 @@ function createInjector(modulesToLoad) {
 		} else if(fn.$inject){
 			return fn.$inject;
 		} else {
+
 			var args = fn.toString().match(/^function\s*[^\(]*\(\s*([^\)]*)\)/m);
-			fn.$inject = args[1].split(",");	
+			fn.$inject = args[1].split(",");
+
 			return args[1].split(",");
 			
 		}
@@ -70,13 +77,10 @@ angular.module("myApp").constant("a", 1);
 angular.module("myApp").constant("b", 2);
 angular.module("myApp").constant("name", "nitesh");
 
-var fn = function(name, a) {
-	console.log(name)
-	console.log(a)
+var fn = function(name,a) {
 	return name + a;
 };
 
-var inject = createInjector(["myApp"]);
 
-console.log(inject.annotate(fn));
-console.log(inject.invoke(fn));
+var inject = createInjector(["myApp"]);
+console.log(inject.invoke(["name", "a", fn]));
