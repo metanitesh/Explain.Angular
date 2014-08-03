@@ -4,10 +4,17 @@ function createInjector(modulesToLoad) {
 	loadedModules = {};
 
 	var $provide = {
+		
 		constant: function(key, val) {
 			cache[key] = val;
+		},
+
+		provider: function(key, provider){
+			cache[key] = provider.$get();
 		}
 	};
+
+
 
 	function invoke(fn, self) {
 		
@@ -77,17 +84,27 @@ function createInjector(modulesToLoad) {
 	};
 }
 
-angular.module("myApp", []);
-console.log(angular.module("myApp"));
+var module = angular.module("myApp", []);
 
-angular.module("myApp").constant("a", 1);
-angular.module("myApp").constant("b", 2);
-angular.module("myApp").constant("name", "nitesh");
+module.provider("a", {
+	$get: function(){
+		return 42;
+	}
+});
 
-var fn = function(name,a) {
-	this.result = name + a;
-};
+console.log(module)
+
+// angular.module("myApp", []);
+// console.log(angular.module("myApp"));
+
+// angular.module("myApp").constant("a", 1);
+// angular.module("myApp").constant("b", 2);
+// angular.module("myApp").constant("name", "nitesh");
+
+// var fn = function(name,a) {
+// 	this.result = name + a;
+// };
 
 
-var inject = createInjector(["myApp"]);
-console.log(inject.instantiate(["name", "a", fn]));
+// var inject = createInjector(["myApp"]);
+// console.log(inject.instantiate(["name", "a", fn]));
