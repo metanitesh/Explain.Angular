@@ -4,13 +4,13 @@ function createInjector(modulesToLoad) {
 	loadedModules = {};
 
 	var $provide = {
-		
+
 		constant: function(key, val) {
 			cache[key] = val;
 		},
 
 		provider: function(key, provider){
-			cache[key] = provider.$get();
+			cache[key] = invoke(provider.$get, provider);
 		}
 	};
 
@@ -30,7 +30,7 @@ function createInjector(modulesToLoad) {
 	}
 
 	function annotate(fn){
-		
+
 		if(_.isArray(fn)){
 			return fn.slice(0, fn.length-1);
 		} else if(fn.$inject){
@@ -41,9 +41,9 @@ function createInjector(modulesToLoad) {
 			fn.$inject = args[1].split(",");
 
 			return args[1].split(",");
-			
+
 		}
-		
+
 	}
 
 	function instantiate(fn){
@@ -69,7 +69,6 @@ function createInjector(modulesToLoad) {
 	});
 
 	console.log(cache);
-	console.log(loadedModules);
 
 	return {
 		has: function(key) {
@@ -85,26 +84,14 @@ function createInjector(modulesToLoad) {
 }
 
 var module = angular.module("myApp", []);
+module.constant("b", 1);
+
+
 
 module.provider("a", {
-	$get: function(){
-		return 42;
+	$get: function(b){
+		return b+1;
 	}
 });
 
-console.log(module)
-
-// angular.module("myApp", []);
-// console.log(angular.module("myApp"));
-
-// angular.module("myApp").constant("a", 1);
-// angular.module("myApp").constant("b", 2);
-// angular.module("myApp").constant("name", "nitesh");
-
-// var fn = function(name,a) {
-// 	this.result = name + a;
-// };
-
-
-// var inject = createInjector(["myApp"]);
-// console.log(inject.instantiate(["name", "a", fn]));
+var injector = createInjector(["myApp"]);
