@@ -3,7 +3,8 @@ function createInjector(modulesToLoad) {
 	instanceCache = {};
 	providerCache = {};
 	var loadedModules = {};
-
+	var INSTANTIATING = {};
+	path = [];
 	var $provide = {
 
 		constant: function(key, val) {
@@ -18,8 +19,13 @@ function createInjector(modulesToLoad) {
 
 	function getService(name){
 		if(instanceCache.hasOwnProperty(name)){
+			if(instanceCache[name] === INSTANTIATING){
+				throw "cricular dependencies  >" + path.join(">");
+			}
 			return instanceCache[name];
 		} else if(providerCache.hasOwnProperty(name+'Provider')){
+			path.unshift(name);
+			instanceCache[name] = INSTANTIATING;
 			var provider = providerCache[name+'Provider'];
 			instanceCache[name] =  invoke(provider.$get, provider);
 			return instanceCache[name];
@@ -104,7 +110,7 @@ module.provider("b", {
 
 
 module.provider("a", {
-	$get: function(){
+	$get: function(b){
 		return 100;
 	}
 });
@@ -112,4 +118,4 @@ module.provider("a", {
 
 
 var injector = createInjector(["myApp"]);
-console.log(injector.get("a"));
+console.log(injector.get("b"));
