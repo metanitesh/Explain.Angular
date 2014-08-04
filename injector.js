@@ -1,7 +1,7 @@
 function createInjector(modulesToLoad) {
 
-	var instanceCache = {};
-	var providerCache = {};
+	instanceCache = {};
+	providerCache = {};
 	var loadedModules = {};
 
 	var $provide = {
@@ -17,12 +17,12 @@ function createInjector(modulesToLoad) {
 
 
 	function getService(name){
-		console.log(name)
 		if(instanceCache.hasOwnProperty(name)){
 			return instanceCache[name];
 		} else if(providerCache.hasOwnProperty(name+'Provider')){
-			var provider = providerCache[name+'Provider']
-			return invoke(provider.$get, provider);
+			var provider = providerCache[name+'Provider'];
+			instanceCache[name] =  invoke(provider.$get, provider);
+			return instanceCache[name];
 		}
 	}
 
@@ -78,9 +78,7 @@ function createInjector(modulesToLoad) {
 		}
 	});
 
-	console.log(instanceCache);
-	console.log(providerCache);
-
+	
 	return {
 		has: function(key) {
 			return instanceCache.hasOwnProperty(key) || providerCache.hasOwnProperty(key+ 'Provider');
@@ -114,5 +112,4 @@ module.provider("a", {
 
 
 var injector = createInjector(["myApp"]);
-
-console.log(injector.get("b"))
+console.log(injector.get("a"));
