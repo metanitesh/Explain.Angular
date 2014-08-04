@@ -1,25 +1,35 @@
 function createInjector(modulesToLoad) {
 
-	var cache = {};
-	loadedModules = {};
+	var instanceCache = {};
+	var providerCache = {};
+	var loadedModules = {};
 
 	var $provide = {
 
 		constant: function(key, val) {
-			cache[key] = val;
+			instanceCache[key] = val;
 		},
 
 		provider: function(key, provider){
-			cache[key] = invoke(provider.$get, provider);
+			providerCache[key + 'Provider'] = provider;
 		}
 	};
 
 
+	function getService(name){
+		console.log(name)
+		if(instanceCache.hasOwnProperty(name)){
+			return instanceCache[name];
+		} else if(providerCache.hasOwnProperty(name+'Provider')){
+			var provider = providerCache[name+'Provider']
+			return invoke(provider.$get, provider);
+		}
+	}
 
 	function invoke(fn, self) {
-		
+
 		var args = _.map(annotate(fn), function(token) {
-			return cache[token];
+			return getService(token);
 		});
 
 		if(_.isArray(fn)){
@@ -68,14 +78,15 @@ function createInjector(modulesToLoad) {
 		}
 	});
 
-	console.log(cache);
+	console.log(instanceCache);
+	console.log(providerCache);
 
 	return {
 		has: function(key) {
-			return cache.hasOwnProperty(key);
+			return instanceCache.hasOwnProperty(key) || providerCache.hasOwnProperty(key+ 'Provider');
 		},
 		get: function(key) {
-			return cache[key];
+			return getService(key);
 		},
 		invoke: invoke,
 		annotate: annotate,
@@ -84,14 +95,24 @@ function createInjector(modulesToLoad) {
 }
 
 var module = angular.module("myApp", []);
-module.constant("b", 1);
 
+module.constant("c", 1);
 
-
-module.provider("a", {
-	$get: function(b){
-		return b+1;
+module.provider("b", {
+	$get: function(a){
+		return a+100;
 	}
 });
 
+
+module.provider("a", {
+	$get: function(){
+		return 100;
+	}
+});
+
+
+
 var injector = createInjector(["myApp"]);
+
+console.log(injector.get("b"))
