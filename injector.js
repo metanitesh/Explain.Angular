@@ -1,19 +1,21 @@
 function createInjector(modulesToLoad) {
 
-	instanceCache = {};
 	providerCache = {};
-	var loadedModules = {};
-	var INSTANTIATING = {};
-	path = [];
-
 	var providerInjector = createInternalInjector(providerCache, function() {
 		throw 'unKnown provider ' + path.join(' <-- ');
 	});
 
+	instanceCache = {};
 	var instanceInjector = createInternalInjector(instanceCache, function(name) {
 		var provider = providerInjector.get(name + 'Provider');
-		return instanceInjector.invoke(provider.$get, Provider);
+		return instanceInjector.invoke(provider.$get, provider);
 	});
+
+
+	var loadedModules = {};
+	var INSTANTIATING = {};
+	path = [];
+
 
 	var $provide = {
 
@@ -23,9 +25,11 @@ function createInjector(modulesToLoad) {
 		},
 
 		provider: function(key, provider) {
+
 			if (_.isFunction(provider)) {
 				provider = providerInjector.instantiate(provider);
 			}
+
 			providerCache[key + 'Provider'] = provider;
 		}
 	};
@@ -68,6 +72,10 @@ function createInjector(modulesToLoad) {
 	function createInternalInjector(cache, factoryFn) {
 
 		function getService(name) {
+			if (!name) {
+				return;
+			};
+
 			if (cache.hasOwnProperty(name)) {
 				if (cache[name] === INSTANTIATING) {
 					throw "circular dependencies" + path.join(" <-- ");
@@ -76,16 +84,18 @@ function createInjector(modulesToLoad) {
 			} else {
 				path.unshift(name);
 				cache[name] = INSTANTIATING;
+
 				return cache[name] = factoryFn(name);
 			}
 		}
 
 		function invoke(fn, self) {
-
 			var args = _.map(annotate(fn), function(token) {
+
 				return getService(token);
 			});
 
+			console.log(fn)
 			if (_.isArray(fn)) {
 				fn = _.last(fn);
 			}
@@ -94,13 +104,11 @@ function createInjector(modulesToLoad) {
 		}
 
 		function instantiate(fn) {
-			console.log()
 			var Parent = _.isArray(fn) ? _.last(fn) : fn;
 			var obj = Object.create(Parent.prototype);
 			invoke(fn, obj);
 			return obj;
 		}
-
 
 		return {
 			has: function(key) {
@@ -139,37 +147,36 @@ function createInjector(modulesToLoad) {
 }
 
 var module = angular.module("myApp", []);
-
 module.constant("a", 1);
-// module.provider("b", {
-// 	$get: function(a){
-// 		console.log (a);
-// 		return a+1;
-// 	}
-// });
-module.provider("b", function(a) {
+
+
+module.provider("c", function(a) {
+	this.a = 10;
 	this.$get = function() {
-		
-		return a + 1;
+		return this.a + 1;
 	};
 });
 
-// module.provider("c", function() {
-// 	this.$get = function(b) {
-// 		return b + 1;
-// 	};
+module.provider("b", {
+	$get: function(c) {
+		return c+1;
+	}
+});
+
+var injector = createInjector(['myApp'])
+injector.get('b')
+
+// module.provider("b", {
+// 	$get: function() {
+// 		return 5;
+// 	}
 // });
 
-var injector = createInjector(['myApp']);
-// console.log(injector.get("c"));
+// module.provider("c", {
+// 	$get: function(b) {
+// 		return b+1;
+// 	}
+// });
 
-// var Ob = function(a,b){
-// 	this.a = a;
-// 	this.b = b
-// }
-
-// Ob.prototype.all = function(){
-// 	return this.a + this.b;
-// }
-
-// console.log(injector.instantiate(Ob));
+// var injector = createInjector(['myApp'])
+// injector.get('c')

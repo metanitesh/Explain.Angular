@@ -11,6 +11,7 @@ function setupModuleLoader(window) {
 		var invokeLater = function(method) {
 			return function() {
 				moduleInstance._invokeQueue.push([method, arguments]);
+				return moduleInstance;
 			};
 		};
 
@@ -18,7 +19,7 @@ function setupModuleLoader(window) {
 			name: name,
 			requires: requires,
 			constant: invokeLater('constant'),
-			provider: invoakeLater('provider'),
+			provider: invokeLater('provider'),
 			_invokeQueue: []
 		};
 
@@ -35,7 +36,7 @@ function setupModuleLoader(window) {
 	};
 
 	ensure(angular, 'module', function() {
-		var modules = {};
+		window.modules = {};
 
 		return function(name, requires) {
 			if (requires) {
@@ -49,3 +50,51 @@ function setupModuleLoader(window) {
 }
 
 setupModuleLoader(window);
+
+
+// var setupModuleLoader = function(window) {
+
+// 	window.modules = [];
+
+// 	var createModule = function(name, dependencies) {
+
+// 		var moduleInstance = {
+// 			name: name,
+// 			requires: dependencies,
+// 			constant: function() {
+// 				this._invokeQueue.push(["constant", arguments]);
+// 			},
+// 			provider: function() {
+// 				this._invokeQueue.push(["provider", arguments]);
+// 			},
+// 			_invokeQueue: []
+// 		};
+
+// 		modules.push(moduleInstance);
+// 		return moduleInstance;
+// 	};
+
+// 	var ensure = function(obj, prop, factory) {
+// 		return obj[prop] || (obj[prop] = factory());
+// 	};
+
+// 	ensure(window, 'angular', function() {
+// 		return {};
+// 	});
+
+// 	ensure(angular, 'module', function() {
+// 		return function(name, dependencies) {
+// 			return createModule(name, dependencies);
+// 		}
+
+// 	})
+
+// }
+
+// setupModuleLoader(window);
+
+// // console.log(angular)
+
+// myApp.constant(1,2,3)
+// console.log(myApp)	
+// // console.log(modules)
