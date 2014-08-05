@@ -12,6 +12,10 @@ function createInjector(modulesToLoad) {
 		},
 
 		provider: function(key, provider){
+			if(_.isFunction(provider)){
+				var provider = instantiate(provider);
+				console.log(provider)
+			}
 			providerCache[key + 'Provider'] = provider;
 		}
 	};
@@ -63,6 +67,7 @@ function createInjector(modulesToLoad) {
 	}
 
 	function instantiate(fn){
+		console.log()
 		var Parent = _.isArray(fn) ? _.last(fn) : fn;
 		var obj = Object.create(Parent.prototype);
 		invoke(fn, obj);
@@ -84,7 +89,9 @@ function createInjector(modulesToLoad) {
 		}
 	});
 
-	
+	console.log(instanceCache);	
+	console.log(providerCache);	
+
 	return {
 		has: function(key) {
 			return instanceCache.hasOwnProperty(key) || providerCache.hasOwnProperty(key+ 'Provider');
@@ -100,22 +107,29 @@ function createInjector(modulesToLoad) {
 
 var module = angular.module("myApp", []);
 
-module.constant("c", 1);
-
-module.provider("b", {
-	$get: function(a){
-		return a+100;
-	}
+module.constant("a", 1);
+// module.provider("b", {
+// 	$get: function(a){
+// 		console.log (a);
+// 		return a+1;
+// 	}
+// });
+module.provider("b", function bProvider(a){
+	this.$get = function(){
+		return a+1;
+	};
 });
 
-
-module.provider("a", {
-	$get: function(b){
-		return 100;
-	}
-});
-
-
-
-var injector = createInjector(["myApp"]);
+var injector = createInjector(['myApp']);
 console.log(injector.get("b"));
+
+// var Ob = function(a,b){
+// 	this.a = a;
+// 	this.b = b
+// }
+
+// Ob.prototype.all = function(){
+// 	return this.a + this.b;
+// }
+
+// console.log(injector.instantiate(Ob));
