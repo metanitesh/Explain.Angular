@@ -1,12 +1,12 @@
 function createInjector(modulesToLoad) {
 
 	providerCache = {};
-	var providerInjector = createInternalInjector(providerCache, function() {
+	var providerInjector = providerCache.$injector = createInternalInjector(providerCache, function() {
 		throw 'unKnown provider ' + path.join(' <-- ');
 	});
 
 	instanceCache = {};
-	var instanceInjector = createInternalInjector(instanceCache, function(name) {
+	var instanceInjector = instanceCache.$injector = createInternalInjector(instanceCache, function(name) {
 		var provider = providerInjector.get(name + 'Provider');
 		return instanceInjector.invoke(provider.$get, provider);
 	});
@@ -95,7 +95,7 @@ function createInjector(modulesToLoad) {
 				return getService(token);
 			});
 
-			console.log(fn)
+			
 			if (_.isArray(fn)) {
 				fn = _.last(fn);
 			}
@@ -140,9 +140,6 @@ function createInjector(modulesToLoad) {
 		}
 	});
 
-	console.log(instanceCache);
-	console.log(providerCache);
-
 	return instanceInjector;
 }
 
@@ -150,21 +147,21 @@ var module = angular.module("myApp", []);
 module.constant("a", 1);
 
 
-module.provider("c", function(a) {
-	this.a = 10;
-	this.$get = function() {
-		return this.a + 1;
-	};
-});
+// module.provider("c", function(a) {
+// 	this.a = 10;
+// 	this.$get = function() {
+// 		return this.a + 1;
+// 	};
+// });
 
 module.provider("b", {
-	$get: function(c) {
-		return c+1;
+	$get: function($injector) {
+		return $injector.get('a');
 	}
 });
 
 var injector = createInjector(['myApp'])
-injector.get('b')
+
 
 // module.provider("b", {
 // 	$get: function() {
