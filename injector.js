@@ -1,12 +1,12 @@
 function createInjector(modulesToLoad) {
 
 	providerCache = {};
-	var providerInjector = providerCache.$injector = createInternalInjector(providerCache, function() {
+	providerInjector = providerCache.$injector = createInternalInjector(providerCache, function() {
 		throw 'unKnown provider ' + path.join(' <-- ');
 	});
 
 	instanceCache = {};
-	var instanceInjector = instanceCache.$injector = createInternalInjector(instanceCache, function(name) {
+	instanceInjector = instanceCache.$injector = createInternalInjector(instanceCache, function(name) {
 		var provider = providerInjector.get(name + 'Provider');
 		return instanceInjector.invoke(provider.$get, provider);
 	});
@@ -17,7 +17,7 @@ function createInjector(modulesToLoad) {
 	path = [];
 
 
-	var $provide = {
+	providerCache.$provide = {
 
 		constant: function(key, val) {
 			instanceCache[key] = val;
@@ -72,6 +72,7 @@ function createInjector(modulesToLoad) {
 	function createInternalInjector(cache, factoryFn) {
 
 		function getService(name) {
+			console.log(cache)
 			if (!name) {
 				return;
 			};
@@ -134,7 +135,7 @@ function createInjector(modulesToLoad) {
 			_.forEach(module._invokeQueue, function(invokeArgs) {
 				var method = invokeArgs[0];
 				var args = invokeArgs[1];
-				$provide[method].apply($provide, args);
+				providerCache.$provide[method].apply(providerCache.$provide, args);
 			});
 
 		}
@@ -144,23 +145,27 @@ function createInjector(modulesToLoad) {
 }
 
 var module = angular.module("myApp", []);
+
 module.constant("a", 1);
 
-
-// module.provider("c", function(a) {
-// 	this.a = 10;
-// 	this.$get = function() {
-// 		return this.a + 1;
-// 	};
-// });
-
-module.provider("b", {
-	$get: function($injector) {
-		return $injector.get('a');
-	}
+module.provider("b", function($provide){
+	$provide.constant("e", 199);
+	this.$get = function(a){
+		return a;
+	};
 });
 
+
 var injector = createInjector(['myApp'])
+console.log(injector.get("b"))
+// console.log(providerInjector.get('$provide'))
+// console.log("here")
+// providerCache.$injector.get()
+
+
+// console.log(instanceInjector.get('$provide'))
+
+// injector.get("b");
 
 
 // module.provider("b", {
