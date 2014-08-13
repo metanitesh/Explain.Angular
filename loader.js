@@ -20,8 +20,14 @@ function setupModuleLoader(window) {
 			requires: requires,
 			constant: invokeLater('$provide', 'constant'),
 			provider: invokeLater('$provide', 'provider'),
+			factory: invokeLater('$provide', 'factory'),
 			config: invokeLater('$injector', 'invoke'),
-			_invokeQueue: []
+			run: function(fn){
+				moduleInstance._runBlock.push(fn);
+				return moduleInstance;
+			},
+			_invokeQueue: [],
+			_runBlock: []
 		};
 
 		modules[name] = moduleInstance;

@@ -31,26 +31,13 @@ function createInjector(modulesToLoad) {
 			}
 
 			providerCache[key + 'Provider'] = provider;
+		},
+
+		factory: function(key, factoryFn){
+			
+			this.provider(key, {$get : factoryFn});
 		}
 	};
-
-
-	// function getService(name) {
-	// 	if (instanceCache.hasOwnProperty(name)) {
-	// 		if (instanceCache[name] === INSTANTIATING) {
-	// 			throw "cricular dependencies  >" + path.join(">");
-	// 		}
-	// 		return instanceCache[name];
-	// 	} else if (providerCache.hasOwnProperty(name + 'Provider')) {
-	// 		path.unshift(name);
-	// 		instanceCache[name] = INSTANTIATING;
-	// 		var provider = providerCache[name + 'Provider'];
-	// 		instanceCache[name] = invoke(provider.$get, provider);
-	// 		return instanceCache[name];
-	// 	}
-	// }
-
-
 
 	function annotate(fn) {
 
@@ -138,6 +125,9 @@ function createInjector(modulesToLoad) {
 				var args = invokeArgs[2];
 				service[method].apply(service, args);
 			});
+			_.forEach(module._runBlock, function(fn){
+				instanceInjector.invoke(fn);
+			})
 
 		}
 	});
@@ -147,18 +137,12 @@ function createInjector(modulesToLoad) {
 
 var module = angular.module("myApp", []);
 
-module.constant("a", 1);
-
-module.provider("b", function($provide){
-	$provide.constant("e", 199);
-	this.$get = function(a){
-		return a;
-	};
+module.factory("a", function(b){
+	return b+10;
 });
 
-module.config(function(a){
-	console.log("config", a)
-});
+module.constant("b", 1);
+
 
 var injector = createInjector(['myApp'])
 // console.log(injector.get("b"))
