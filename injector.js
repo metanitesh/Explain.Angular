@@ -34,8 +34,11 @@ function createInjector(modulesToLoad) {
 		},
 
 		factory: function(key, factoryFn){
-			
 			this.provider(key, {$get : factoryFn});
+		},
+
+		value: function(key, value){
+			this.factory(key, _.constant(value));
 		}
 	};
 
@@ -141,7 +144,14 @@ module.factory("a", function(b){
 	return b+10;
 });
 
+module.provider("c", {
+	$get: function(a){		
+		return a+3;
+	}
+});
+
 module.constant("b", 1);
+module.value("l", 2);
 
 
 var injector = createInjector(['myApp'])
