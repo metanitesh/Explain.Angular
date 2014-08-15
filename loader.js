@@ -23,6 +23,7 @@ function setupModuleLoader(window) {
 			factory: invokeLater('$provide', 'factory'),
 			config: invokeLater('$injector', 'invoke'),
 			value: invokeLater('$provide', 'value'),
+			service: invokeLater('$provide', 'service'),
 			run: function(fn){
 				moduleInstance._runBlock.push(fn);
 				return moduleInstance;
@@ -57,4 +58,4 @@ function setupModuleLoader(window) {
 	});
 }
 
-setupModuleLoader(window);
+
