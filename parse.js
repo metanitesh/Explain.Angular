@@ -1,25 +1,29 @@
 var OPERATORS = {
 	'null': _.constant(null),
 	'true': _.constant(true),
-	'false': _.constant(false)
+	'false': _.constant(false),
+	'+': function() {},
+	'!': function(self, a) {
+		return !a((self));
+	}
 };
 
-var simpleGetterFn1 = function(key){
-	return function(scope){
+var simpleGetterFn1 = function(key) {
+	return function(scope) {
 		return (scope) ? scope[key] : undefined;
 	};
 };
 
 
-var setter = function(object, key, value){
+var setter = function(object, key, value) {
 	object[key] = value;
 	return value;
 };
 
-var simpleGetterFn2 = function(key1, key2){
+var simpleGetterFn2 = function(key1, key2) {
 
-	return function(scope){
-		if(!scope){
+	return function(scope) {
+		if (!scope) {
 			return undefined;
 		}
 
@@ -28,26 +32,26 @@ var simpleGetterFn2 = function(key1, key2){
 	};
 };
 
-var generateGetterFn = function(pathKeys){
+var generateGetterFn = function(pathKeys) {
 
 	var code = "";
 
-	_.each(pathKeys, function(pathKey){
+	_.each(pathKeys, function(pathKey) {
 		code += "if(!scope) {return undefined};\n";
-		code += "scope = scope['"+pathKey+"'];\n";
+		code += "scope = scope['" + pathKey + "'];\n";
 	});
 
-	code+= "return scope;";
+	code += "return scope;";
 	return new Function("scope", code);
 
 };
 
-var getterFn = function(indent){
+var getterFn = function(indent) {
 	var pathKey = indent.split(".");
 
-	if(pathKey.length === 1){
+	if (pathKey.length === 1) {
 		return simpleGetterFn1(pathKey[0]);
-	} else if(pathKey.length === 2){
+	} else if (pathKey.length === 2) {
 		return simpleGetterFn2(pathKey[0], pathKey[1]);
 	} else {
 		return generateGetterFn(pathKey);
@@ -137,6 +141,7 @@ var Lexer = util.defClass({
 
 	readIdentifier: function() {
 		var string = "";
+
 		while (this.index < this.text.length) {
 			var ch = this.text[this.index];
 
@@ -160,7 +165,7 @@ var Lexer = util.defClass({
 			token.json = true;
 		} else {
 			token.fn = getterFn(string);
-			token.fn.assign = function(self, value){
+			token.fn.assign = function(self, value) {
 				return setter(self, string, value);
 			};
 		}
@@ -191,7 +196,7 @@ var Lexer = util.defClass({
 				this.readIdentifier();
 			} else if (this.isWhiteSpace(this.ch)) {
 				this.index++;
-			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',' || this.ch === '{' || this.ch === '}' || this.ch === ':', this.ch === '=' ) {
+			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',' || this.ch === '{' || this.ch === '}' || this.ch === ':', this.ch === '=') {
 				this.tokens.push({
 					text: this.ch,
 					json: true
@@ -199,7 +204,21 @@ var Lexer = util.defClass({
 
 				this.index++;
 			} else {
-				throw "unexpected token --> " + this.ch;
+				console.log(this.ch)
+				var fn = OPERATORS[this.ch];
+				console.log(fn)
+
+				if (fn) {
+					this.tokens.push({
+						text: this.ch,
+						fn: fn
+					});
+					this.index++;
+
+				} else {
+					throw "unexpected token --> " + this.ch;
+				}
+
 			}
 		}
 
@@ -250,15 +269,15 @@ var Parser = util.defClass({
 			primary = token.fn;
 
 		}
-		
-		
+
+
 
 		return primary;
 
 
 	},
 
-	
+
 	object: function() {
 		var keyValue = [];
 
@@ -309,16 +328,24 @@ var Parser = util.defClass({
 		};
 	},
 
-	assignment : function(){
-		var left = this.primary();
-		if(this.expect("=")){
-			var right = this.primary();
-			return function(scope){
+	assignment: function() {
+		var left = this.unary();
+		if (this.expect("=")) {
+			var right = this.unary();
+			return function(scope) {
 				return left.assign(scope, right(scope));
 			};
 		}
 
 		return left;
+	},
+
+	unary: function() {
+		if (this.expect("+")) {
+			return this.primary();
+		} else {
+			return this.primary();
+		}
 	},
 
 	parse: function(exp) {
@@ -328,21 +355,22 @@ var Parser = util.defClass({
 	}
 });
 
+function $ParseProvider() {
 
-function parse(exp) {
+	this.$get = function() {
+		return function(exp) {
 
-	switch (typeof exp) {
-		case "string":
-			var lexer = new Lexer();
-			var parser = new Parser(lexer);
-			return parser.parse(exp);
-		case "function":
-			return exp;
-		default:
-			return _.noop;
-	}
-	
+			switch (typeof exp) {
+				case "string":
+					var lexer = new Lexer();
+					var parser = new Parser(lexer);
+					return parser.parse(exp);
+				case "function":
+					return exp;
+				default:
+					return _.noop;
+			}
+
+		};
+	};
 }
-
-console.log(parse("a+b"));
-
