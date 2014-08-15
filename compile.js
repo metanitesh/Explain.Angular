@@ -1,19 +1,34 @@
-function $CompileProvider($provide){
+function $CompileProvider($provide) {
+
 
 	hasDirectives = [];
 
-	this.$get = function(){
-
+	this.$get = function() {
+		return "helloD";
 	};
 
-	this.directive = function(name, directiveFactory){
+	getme = function(){
+		return hasDirectives;
+	}
 
-		if(!hasDirectives.hasOwnProperty(name)){
+	this.directive = function(name, directiveFactory) {
+
+
+		if (!hasDirectives.hasOwnProperty(name)) {
 			hasDirectives[name] = [];
+			$provide.factory(name + 'Directive', function($injector) {
+				var factories = hasDirectives[name];
+				return _.map(factories, $injector.invoke);
+
+			});
 		}
+
+
 		hasDirectives[name].push(directiveFactory);
-		$provide.factory( name+'Directive', directiveFactory );
+		console.log(hasDirectives)
 	};
+
+
 }
 
 $CompileProvider.$inject = ['$provide'];
