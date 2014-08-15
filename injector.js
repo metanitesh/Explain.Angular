@@ -39,6 +39,12 @@ function createInjector(modulesToLoad) {
 
 		value: function(key, value){
 			this.factory(key, _.constant(value));
+		},
+
+		service: function(key, Constructor){
+			this.factory(key, function(){
+				return instanceInjector.instantiate(Constructor);
+			});
 		}
 	};
 
@@ -127,6 +133,7 @@ function createInjector(modulesToLoad) {
 				var method = invokeArgs[1];
 				var args = invokeArgs[2];
 				service[method].apply(service, args);
+
 			});
 			_.forEach(module._runBlock, function(fn){
 				instanceInjector.invoke(fn);
@@ -138,45 +145,56 @@ function createInjector(modulesToLoad) {
 	return instanceInjector;
 }
 
-var module = angular.module("myApp", []);
+// var module = angular.module("myApp", []);
 
-module.factory("a", function(b){
-	return b+10;
-});
-
-module.provider("c", {
-	$get: function(a){		
-		return a+3;
-	}
-});
-
-module.constant("b", 1);
-module.value("l", 2);
-
-
-var injector = createInjector(['myApp'])
-// console.log(injector.get("b"))
-// console.log(providerInjector.get('$provide'))
-// console.log("here")
-// providerCache.$injector.get()
-
-
-// console.log(instanceInjector.get('$provide'))
-
-// injector.get("b");
-
-
-// module.provider("b", {
-// 	$get: function() {
-// 		return 5;
-// 	}
+// module.factory("a", function(b){
+// 	return b+10;
 // });
 
 // module.provider("c", {
-// 	$get: function(b) {
-// 		return b+1;
+// 	$get: function(a){
+// 		return a+3;
 // 	}
 // });
 
+
+// module.service('all', function(l){
+// 	this.val = function(){
+// 		return l;
+// 	};
+// });
+
+
+
+
+// module.constant("b", 1);
+// module.value("l", 2);
+
+
 // var injector = createInjector(['myApp'])
-// injector.get('c')
+
+// // console.log(injector.get("b"))
+// // console.log(providerInjector.get('$provide'))
+// // console.log("here")
+// // providerCache.$injector.get()
+
+
+// // console.log(instanceInjector.get('$provide'))
+
+// // injector.get("b");
+
+
+// // module.provider("b", {
+// // 	$get: function() {
+// // 		return 5;
+// // 	}
+// // });
+
+// // module.provider("c", {
+// // 	$get: function(b) {
+// // 		return b+1;
+// // 	}
+// // });
+
+// // var injector = createInjector(['myApp'])
+// // injector.get('c')
