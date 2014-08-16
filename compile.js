@@ -13,27 +13,27 @@ function $CompileProvider($provide) {
 		console.log($injector)
 
 		function compile($nodes) {
-
-
 			return compileNodes($nodes);
 		}
 
 
 		function compileNodes($nodes) {
 			_.forEach($nodes, function(node) {
-				console.log(node)
 				var directives = collectDirectives(node);
 				applyDirectivesToNode(directives, node);
+				console.log(node.childNodes)
+				if(node.childNodes && node.childNodes.length){
+					compileNodes(node.childNodes);
+				}
 			});
 		}
 
 		function collectDirectives(node) {
 			var directives = [];
-			console.log(nodeName(node))
 			var normalizedNodeName = camelCase(nodeName(node).toLowerCase());
-			console.log(normalizedNodeName)
 			addDirective(directives, normalizedNodeName);
-			console.log(directives);
+
+			
 			return directives;
 		}
 
@@ -48,12 +48,9 @@ function $CompileProvider($provide) {
 			return element.nodeName ? element.nodeName : element[0].nodeName;
 		}
 
-		function addDirective(directives, name){
-			hd = hasDirectives;
-			console.log(hasDirectives)
+		function addDirective(directives, name) {
 
 			if (hasDirectives.hasOwnProperty(name)) {
-				console.log($injector.get(name + 'Directive'))
 				directives.push.apply(directives, $injector.get(name + 'Directive'));
 			}
 		}
@@ -61,12 +58,8 @@ function $CompileProvider($provide) {
 		function applyDirectivesToNode(directives, node) {
 
 			var $compileNode = $(node);
-			console.log("apply", $compileNode)
-			console.log("apply", directives)
 			_.forEach(directives, function(directive) {
-
 				if (directive.compile) {
-					console.log(directive.compile)
 					directive.compile($compileNode);
 				}
 			});
