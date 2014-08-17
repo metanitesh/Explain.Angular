@@ -328,15 +328,3 @@ function $RootScopeProvider() {
 		}]
 
 }
-
-
-
-// var scope = new Scope();
-// scope.title = "43";
-
-// console.log(parse(scope.title)());
-// scope.$watchCollection( parse(scope.title) , function(){
-// 	console.log("hello");
-// })
-
-// scope.$digest();
