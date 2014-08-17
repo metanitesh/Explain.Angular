@@ -19,4 +19,3 @@ var a = hashKey({
 	"key": "val"
 });
 
-console.log(a);
