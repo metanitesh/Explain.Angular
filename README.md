@@ -6,15 +6,15 @@
 
 ###Dependencies Injectection Framework: 
 
-angular's DI framework is defiantly an interesting take on dependencies management in javascript projects. as DI is arguably most important and confusing aspect of angular, expalin.angular re-implement pretty much the whole thing. 
+>angular's DI framework is defiantly an interesting take on dependencies management in javascript projects. as DI is arguably most important and confusing aspect of angular, expalin.angular re-implement pretty much the whole thing. 
 
-relevant code can be found in loader.js and injector.js
+>relevant code can be found in loader.js and injector.js
 
 ###Scope/2way-binding/Digest-cycle
 
 > Digest cycle (2 way binding) is surely most mystic and performance sensitive feature of angular. as a result it can seriously cut down number of lines of code we need to write but if not approached carefully can cause serious performance penalty as well.
 
-explain.angular implements crux of dirty checking, watcher, digest and scope inheritance while leaving several performance optimization that angular uses. relevant code can be found in scope.js
+>explain.angular implements crux of dirty checking, watcher, digest and scope inheritance while leaving several performance optimization that angular uses. relevant code can be found in scope.js
 
 ###expression
 	
@@ -22,7 +22,7 @@ angular expression is pretty much a language in itself. Explain.angualr implemen
 
 Directives 
 
-angular directive is again one of those magical and opinionated feature which separate it from the rest of the framework  but under the hood it is a compiler in itself and simpler version of the same could be found in complie.js
+>angular directive is again one of those magical and opinionated feature which separate it from the rest of the framework  but under the hood it is a compiler in itself and simpler version of the same could be found in complie.js
 
 
 
