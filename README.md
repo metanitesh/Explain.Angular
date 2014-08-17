@@ -18,9 +18,9 @@
 
 ###expression
 	
-angular expression is pretty much a language in itself. Explain.angualr implements a smaller version of it.relevant code can be found in parse.js 
+>angular expression is pretty much a language in itself. Explain.angualr implements a smaller version of it.relevant code can be found in parse.js 
 
-Directives 
+###Directives 
 
 >angular directive is again one of those magical and opinionated feature which separate it from the rest of the framework  but under the hood it is a compiler in itself and simpler version of the same could be found in complie.js
 
