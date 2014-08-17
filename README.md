@@ -16,7 +16,7 @@
 
 >explain.angular implements crux of dirty checking, watcher, digest and scope inheritance while leaving several performance optimization that angular uses. relevant code can be found in scope.js
 
-###expression
+###Expression
 	
 >angular expression is pretty much a language in itself. Explain.angualr implements a smaller version of it.relevant code can be found in parse.js 
 
